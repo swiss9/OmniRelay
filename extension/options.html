@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OmniRelay Settings</title>
+  <style>
+    body { font-family: system-ui; max-width: 500px; margin: 2rem auto; }
+    label { display: block; margin: 1rem 0 0.25rem; }
+    input { width: 100%; padding: 0.5rem; }
+    button { margin-top: 1rem; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .status { margin-top: 0.5rem; color: green; }
+  </style>
+</head>
+<body>
+  <h1>OmniRelay Settings</h1>
+  <label>Backend URL</label>
+  <input type="text" id="backendUrl" placeholder="https://your-backend.railway.app">
+  <label>Telegram Chat ID (e.g., -100123456)</label>
+  <input type="text" id="telegramChatId" placeholder="-1001234567890">
+  <label>Discord Webhook URL</label>
+  <input type="text" id="discordWebhook" placeholder="https://discord.com/api/webhooks/...">
+  <label>License Key (leave empty for free tier)</label>
+  <input type="text" id="license" placeholder="OMNI-XXXXXXXX">
+  <button id="saveBtn">Save</button>
+  <div id="saveStatus" class="status"></div>
+  <button id="checkLicenseBtn" style="margin-top:0.5rem; background:#6b7280;">Validate License</button>
+  <div id="licenseStatus"></div>
+  <script src="options.js"></script>
+</body>
+</html>

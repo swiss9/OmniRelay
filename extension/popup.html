@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OmniRelay</title>
+  <style>
+    body { width: 300px; padding: 1rem; font-family: system-ui; }
+    textarea, input, select, button { width: 100%; margin: 0.5rem 0; padding: 0.5rem; box-sizing: border-box; }
+    button { background: #2563eb; color: white; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status { font-size: 0.8rem; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <h3>⚡ OmniRelay</h3>
+  <textarea id="text" rows="3" placeholder="Message text..."></textarea>
+  <div class="status" id="pageInfo"></div>
+  <div id="targetsSection" style="display:none;">
+    <label>Send to:</label>
+    <div id="targetsCheckboxes"></div>
+  </div>
+  <button id="sendBtn">Send</button>
+  <div id="result"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

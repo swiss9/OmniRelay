@@ -1,13 +1,19 @@
 const db = require('./db');
 
-function validateLicense(key) {
-  if (!key) return false;
-  const row = db.prepare('SELECT * FROM licenses WHERE key = ?').get(key);
-  return !!row;
+async function validateLicense(key) {
+  const result = await db.execute({
+    sql: 'SELECT * FROM licenses WHERE key = ?',
+    args: [key]
+  });
+  return result.rows.length > 0;
 }
 
-function canAddTarget(clientId, targets) {
-  const existing = db.prepare('SELECT target FROM free_targets WHERE client_id = ?').all(clientId).map(r => r.target);
+async function canAddTarget(clientId, targets) {
+  const existingResult = await db.execute({
+    sql: 'SELECT target FROM free_targets WHERE client_id = ?',
+    args: [clientId]
+  });
+  const existing = existingResult.rows.map(r => r.target);
   const newTargets = targets.filter(t => !existing.includes(t));
   if (newTargets.length === 0) return true;
   const newTelegram = newTargets.filter(t => t.startsWith('telegram:'));
@@ -17,10 +23,12 @@ function canAddTarget(clientId, targets) {
   return (existingTelegram + newTelegram.length <= 1) && (existingDiscord + newDiscord.length <= 1);
 }
 
-function trackFreeTarget(clientId, targets) {
-  const insert = db.prepare('INSERT OR IGNORE INTO free_targets (client_id, target) VALUES (?, ?)');
+async function trackFreeTarget(clientId, targets) {
   for (const target of targets) {
-    insert.run(clientId, target);
+    await db.execute({
+      sql: 'INSERT OR IGNORE INTO free_targets (client_id, target) VALUES (?, ?)',
+      args: [clientId, target]
+    });
   }
 }
 

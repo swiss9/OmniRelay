@@ -130,55 +130,6 @@ app.get('/pay', (req, res) => {
 </html>`);
 });
 
-// ─── Mobile Test Page ───
-app.get('/test', (req, res) => {
-  res.send(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>OmniRelay Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { font-family: sans-serif; padding: 1rem; }
-    input, textarea { width: 100%; margin: 0.5rem 0; padding: 0.6rem; box-sizing: border-box; }
-    button { background: #2563eb; color: white; padding: 0.8rem; border: none; border-radius: 6px; width: 100%; }
-  </style>
-</head>
-<body>
-  <h2>Test OmniRelay</h2>
-  <input id="tg" placeholder="Telegram Chat ID (e.g. -100123456)">
-  <input id="dc" placeholder="Discord Webhook URL">
-  <textarea id="msg" rows="3" placeholder="Message..."></textarea>
-  <button onclick="send()">Send to Both</button>
-  <pre id="result"></pre>
-  <script>
-    async function send() {
-      const tg = document.getElementById('tg').value.trim();
-      const dc = document.getElementById('dc').value.trim();
-      const msg = document.getElementById('msg').value.trim();
-      const targets = [];
-      if (tg) targets.push('telegram:' + tg);
-      if (dc) targets.push('discord:' + dc);
-      const payload = {
-        text: msg || 'Test from OmniRelay',
-        url: 'https://example.com',
-        targets,
-        license: '',
-        clientId: 'mobile-test-' + Date.now()
-      };
-      const res = await fetch('/api/relay', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-    }
-  </script>
-</body>
-</html>`);
-});
-
 // ─── Relay Endpoint ───
 app.post('/api/relay', async (req, res) => {
   const { text, url, image, targets, license, clientId } = req.body;

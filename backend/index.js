@@ -553,24 +553,60 @@ app.post('/api/admin/generate-key', async (req, res) => {
     const { adminSecret } = req.body;
     if (adminSecret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
 
-    // Ensure the licenses table exists
-    await db.execute({
-      sql: `CREATE TABLE IF NOT EXISTS licenses (
-        key TEXT PRIMARY KEY,
-        type TEXT DEFAULT 'pro',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`
-    });
+    // 1. Ensure table exists (use separate execute to catch errors)
+    try {
+      await db.execute({
+        sql: `CREATE TABLE IF NOT EXISTS licenses (
+          key TEXT PRIMARY KEY,
+          type TEXT DEFAULT 'pro',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`
+      });
+    } catch (tableError) {
+      return res.status(500).json({ error: 'Table creation failed', details: tableError.message });
+    }
 
     const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
-    await db.execute({
-      sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
-      args: [key, 'pro']
-    });
 
-    res.json({ key });
+    // 2. Insert the new key
+    let insertResult;
+    try {
+      insertResult = await db.execute({
+        sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
+        args: [key, 'pro']
+      });
+    } catch (insertError) {
+      return res.status(500).json({ error: 'Insert failed', details: insertError.message });
+    }
+
+    // 3. Immediately query the same key to confirm it's stored
+    let verifyResult;
+    try {
+      verifyResult = await db.execute({
+        sql: 'SELECT * FROM licenses WHERE key = ?',
+        args: [key]
+      });
+    } catch (selectError) {
+      return res.status(500).json({ error: 'Verification select failed', details: selectError.message });
+    }
+
+    // Return everything for debugging
+    res.json({
+      key,
+      stored: verifyResult.rows && verifyResult.rows.length > 0,
+      debug: {
+        insertResult: {
+          lastInsertRowid: insertResult.lastInsertRowid,
+          rowsAffected: insertResult.rowsAffected
+        },
+        verifyResult: {
+          rowCount: verifyResult.rows ? verifyResult.rows.length : 0,
+          rows: verifyResult.rows || []
+        }
+      }
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Database error', details: error.message });
+    res.status(500).json({ error: 'Unexpected error', details: error.message });
   }
 });
 

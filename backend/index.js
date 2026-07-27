@@ -153,7 +153,7 @@ app.get('/', (req, res) => {
 </html>`);
 });
 
-// ─── Payment Page (Redesigned network selector) ───
+// ─── Payment Page ───
 app.get('/pay', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -422,47 +422,7 @@ app.get('/pay', (req, res) => {
 </body>
 </html>`);
 });
-// TEMPORARY – check Turso connection (delete after fix)
-app.get('/db-test', async (req, res) => {
-  try {
-    const result = await db.execute('SELECT 1');
-    res.json({ success: true, message: 'Database connected', rows: result.rows });
-  } catch (error) {
-    res.status(500).json({ error: 'Database error', details: error.message });
-  }
-});// TEMPORARY – test Pro key generation and relay (delete after use)
-app.get('/pro-test', (req, res) => {
-  res.send(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Pro Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: system-ui; background: #000; color: #fff; padding: 1.5rem; }
-    input, button, textarea { width: 100%; padding: 0.7rem; margin: 0.4rem 0; border: 1px solid #333; border-radius: 8px; background: #0a0a0a; color: #fff; font-size: 1rem; }
-    button { background: #fff; color: #000; font-weight: bold; border: none; cursor: pointer; }
-    pre { background: #111; padding: 1rem; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
-    hr { border-color: #333; margin: 1.5rem 0; }
-  </style>
-</head>
-<body>
-  <h2>🔐 Generate Pro Key</h2>
-  <input type="password" id="s" placeholder="Admin Secret">
-  <button onclick="fetch('/api/admin/generate-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminSecret:document.getElementById('s').value})}).then(r=>r.json()).then(d=>document.getElementById('k').textContent=JSON.stringify(d))">Generate Key</button>
-  <pre id="k"></pre>
 
-  <hr>
-  <h2>📨 Test Relay</h2>
-  <input id="license" placeholder="License Key (empty for free tier)">
-  <input id="tg" placeholder="Telegram Chat ID">
-  <input id="dc" placeholder="Discord Webhook URL">
-  <textarea id="msg" placeholder="Message">Pro test – no watermark</textarea>
-  <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:document.getElementById('msg').value,url:'https://example.com',targets:['telegram:'+document.getElementById('tg').value,'discord:'+document.getElementById('dc').value],license:document.getElementById('license').value,clientId:'pro-test-'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('r').textContent=JSON.stringify(d))">Send Relay</button>
-  <pre id="r"></pre>
-</body>
-</html>`);
-});
 // ─── Relay Endpoint ───
 app.post('/api/relay', async (req, res) => {
   try {
@@ -544,7 +504,7 @@ app.post('/api/check-license', async (req, res) => {
 // ─── Payment Routes ───
 app.use('/api/payment', payment);
 
-// ─── Admin Key Generation ───
+// ─── Admin Key Generation (with detailed error) ───
 app.post('/api/admin/generate-key', async (req, res) => {
   try {
     const { adminSecret } = req.body;
@@ -556,7 +516,8 @@ app.post('/api/admin/generate-key', async (req, res) => {
     });
     res.json({ key });
   } catch (error) {
-    res.status(500).json({ error: 'Database error' });
+    // Return the actual error message for debugging
+    res.status(500).json({ error: 'Database error', details: error.message });
   }
 });
 

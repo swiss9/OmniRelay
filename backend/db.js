@@ -1,25 +1,26 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+const { createClient } = require('@libsql/client');
 
-const dbPath = process.env.DB_PATH || './data/omni.db';
-const dir = path.dirname(dbPath);
-if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+const db = createClient({
+  url: process.env.TURSO_DB_URL,
+  authToken: process.env.TURSO_DB_TOKEN,
+});
 
-const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-
-db.exec(`
+// Initialize tables (run once, safe to run multiple times)
+db.execute(`
   CREATE TABLE IF NOT EXISTS licenses (
     key TEXT PRIMARY KEY,
     type TEXT DEFAULT 'pro',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+`).catch(() => {});
+db.execute(`
   CREATE TABLE IF NOT EXISTS free_targets (
     client_id TEXT NOT NULL,
     target TEXT NOT NULL,
     PRIMARY KEY (client_id, target)
   );
+`).catch(() => {});
+db.execute(`
   CREATE TABLE IF NOT EXISTS payments (
     tx_hash TEXT PRIMARY KEY,
     network TEXT,
@@ -27,6 +28,6 @@ db.exec(`
     license_key TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
-`);
+`).catch(() => {});
 
 module.exports = db;

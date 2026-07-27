@@ -1,5 +1,9 @@
+if (typeof browser === 'undefined') {
+  var browser = chrome;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  chrome.storage.local.get(['backendUrl', 'telegramChatId', 'discordWebhook', 'license'], (data) => {
+  browser.storage.local.get(['backendUrl', 'telegramChatId', 'discordWebhook', 'license'], (data) => {
     document.getElementById('backendUrl').value = data.backendUrl || '';
     document.getElementById('telegramChatId').value = data.telegramChatId || '';
     document.getElementById('discordWebhook').value = data.discordWebhook || '';
@@ -7,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('saveBtn').addEventListener('click', () => {
-    chrome.storage.local.set({
+    browser.storage.local.set({
       backendUrl: document.getElementById('backendUrl').value.trim(),
       telegramChatId: document.getElementById('telegramChatId').value.trim(),
       discordWebhook: document.getElementById('discordWebhook').value.trim(),
@@ -23,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const license = document.getElementById('license').value.trim();
     const res = await fetch(`${backendUrl}/api/check-license`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ license })
     });
     const data = await res.json();

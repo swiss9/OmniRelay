@@ -5,42 +5,46 @@ const TURSO_TOKEN = process.env.TURSO_DB_TOKEN;
 
 async function execute(sql, args = []) {
   const payload = {
-    requests: [
-      { type: 'execute', stmt: { sql, args } }
-    ]
+    requests: [{ type: 'execute', stmt: { sql, args } }]
   };
 
-  const response = await axios.post(
-    `${TURSO_URL}/v2/pipeline`,
-    payload,
-    {
-      headers: {
-        Authorization: `Bearer ${TURSO_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
+  try {
+    const response = await axios.post(
+      `${TURSO_URL}/v2/pipeline`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${TURSO_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const result = response.data.results[0];
+    if (result.type === 'error') {
+      throw new Error(result.error.message);
     }
-  );
 
-  const result = response.data.results[0];
-  if (result.type === 'error') {
-    throw new Error(result.error.message);
-  }
-
-  // Handle both query and execute statements
-  if (result.result) {
-    // It's a write statement (INSERT/UPDATE/DELETE) – no columns
-    return { lastInsertRowid: result.result.lastInsertRowId, rowsAffected: result.result.rowsAffected };
-  } else {
-    // It's a query (SELECT) – return rows array
-    const cols = result.columns || [];
-    const rows = (result.rows || []).map(row => {
-      const obj = {};
-      cols.forEach((col, i) => {
-        obj[col] = row[i];
+    // If columns exist, it's a query; otherwise it's a write statement
+    if (result.columns) {
+      const cols = result.columns;
+      const rows = (result.rows || []).map(row => {
+        const obj = {};
+        cols.forEach((col, i) => { obj[col] = row[i]; });
+        return obj;
       });
-      return obj;
-    });
-    return { rows };
+      return { rows };
+    } else {
+      const lastInsertRowid = result.lastInsertRowId || result.last_insert_rowid || null;
+      return { lastInsertRowid };
+    }
+  } catch (err) {
+    // If the error is from axios and has a response, include the Turso response body
+    if (err.response && err.response.data) {
+      const detail = JSON.stringify(err.response.data);
+      throw new Error(`Turso API error (${err.response.status}): ${detail}`);
+    }
+    throw err;
   }
 }
 
@@ -70,7 +74,6 @@ async function initDb() {
   `);
 }
 
-// Wait for table creation to finish before accepting requests
 initDb().catch(console.error);
 
 module.exports = { execute };

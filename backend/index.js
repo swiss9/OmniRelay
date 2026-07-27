@@ -422,7 +422,15 @@ app.get('/pay', (req, res) => {
 </body>
 </html>`);
 });
-// TEMPORARY – test Pro key generation and relay (delete after use)
+// TEMPORARY – check Turso connection (delete after fix)
+app.get('/db-test', async (req, res) => {
+  try {
+    const result = await db.execute('SELECT 1');
+    res.json({ success: true, message: 'Database connected', rows: result.rows });
+  } catch (error) {
+    res.status(500).json({ error: 'Database error', details: error.message });
+  }
+});// TEMPORARY – test Pro key generation and relay (delete after use)
 app.get('/pro-test', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html>

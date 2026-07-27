@@ -72,4 +72,4 @@ MIT – see the [LICENSE](LICENSE) file.
 
 ---
 
-Built with 💻 by [swiss9](https://github.com/swiss9)
+Built by [swiss](https://github.com/swiss9)

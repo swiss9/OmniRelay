@@ -3,20 +3,24 @@ const axios = require('axios');
 const TURSO_URL = process.env.TURSO_DB_URL.replace('libsql://', 'https://');
 const TURSO_TOKEN = process.env.TURSO_DB_TOKEN;
 
-// Convert a plain value to a Turso typed argument
-function toTursoArg(value) {
-  if (value === null || value === undefined) return { type: 'null' };
-  if (typeof value === 'number') return { type: 'integer', value: Math.round(value) };
-  if (typeof value === 'boolean') return { type: 'integer', value: value ? 1 : 0 };
-  // strings and everything else as text
-  return { type: 'text', value: String(value) };
-}
-
-async function execute(sql, args = []) {
-  const typedArgs = args.map(toTursoArg);
+async function execute(query) {
+  // Accept both execute(sql, args) and execute({ sql, args })
+  let sql, args;
+  if (typeof query === 'object' && query.sql) {
+    sql = query.sql;
+    args = query.args || [];
+  } else {
+    sql = query;
+    args = Array.isArray(arguments[1]) ? arguments[1] : [];
+  }
 
   const payload = {
-    requests: [{ type: 'execute', stmt: { sql, args: typedArgs } }]
+    requests: [
+      {
+        type: 'execute',
+        stmt: { sql, args }   // args as plain values (strings, numbers)
+      }
+    ]
   };
 
   try {
@@ -36,7 +40,7 @@ async function execute(sql, args = []) {
       throw new Error(result.error.message);
     }
 
-    // If columns exist, it's a query; otherwise it's a write statement
+    // Query result
     if (result.columns) {
       const cols = result.columns;
       const rows = (result.rows || []).map(row => {
@@ -45,43 +49,41 @@ async function execute(sql, args = []) {
         return obj;
       });
       return { rows };
-    } else {
-      const lastInsertRowid = result.lastInsertRowId || result.last_insert_rowid || null;
-      return { lastInsertRowid };
     }
+    // Execute result (INSERT/UPDATE/DELETE)
+    return { lastInsertRowid: result.lastInsertRowId || null };
   } catch (err) {
     if (err.response && err.response.data) {
-      const detail = JSON.stringify(err.response.data);
-      throw new Error(`Turso API error (${err.response.status}): ${detail}`);
+      throw new Error(`Turso API error (${err.response.status}): ${JSON.stringify(err.response.data)}`);
     }
     throw err;
   }
 }
 
 async function initDb() {
-  await execute(`
-    CREATE TABLE IF NOT EXISTS licenses (
+  await execute({
+    sql: `CREATE TABLE IF NOT EXISTS licenses (
       key TEXT PRIMARY KEY,
       type TEXT DEFAULT 'pro',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-  await execute(`
-    CREATE TABLE IF NOT EXISTS free_targets (
+    )`
+  });
+  await execute({
+    sql: `CREATE TABLE IF NOT EXISTS free_targets (
       client_id TEXT NOT NULL,
       target TEXT NOT NULL,
       PRIMARY KEY (client_id, target)
-    )
-  `);
-  await execute(`
-    CREATE TABLE IF NOT EXISTS payments (
+    )`
+  });
+  await execute({
+    sql: `CREATE TABLE IF NOT EXISTS payments (
       tx_hash TEXT PRIMARY KEY,
       network TEXT,
       amount REAL,
       license_key TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+    )`
+  });
 }
 
 initDb().catch(console.error);

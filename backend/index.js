@@ -422,7 +422,39 @@ app.get('/pay', (req, res) => {
 </body>
 </html>`);
 });
+// TEMPORARY – test page (remove after testing)
+app.get('/pro-test', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pro Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui; background: #000; color: #fff; padding: 1.5rem; }
+    input, button, textarea { width: 100%; padding: 0.7rem; margin: 0.4rem 0; border: 1px solid #333; border-radius: 8px; background: #0a0a0a; color: #fff; font-size: 1rem; }
+    button { background: #fff; color: #000; font-weight: bold; border: none; cursor: pointer; }
+    pre { background: #111; padding: 1rem; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
+    hr { border-color: #333; margin: 1.5rem 0; }
+  </style>
+</head>
+<body>
+  <h2>🔐 Generate Pro Key</h2>
+  <input type="password" id="s" placeholder="Admin Secret">
+  <button onclick="fetch('/api/admin/generate-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminSecret:document.getElementById('s').value})}).then(r=>r.json()).then(d=>document.getElementById('k').textContent=JSON.stringify(d, null, 2))">Generate Key</button>
+  <pre id="k"></pre>
 
+  <hr>
+  <h2>📨 Test Relay</h2>
+  <input id="license" placeholder="License Key (empty = free tier)">
+  <input id="tg" placeholder="Telegram Chat ID">
+  <input id="dc" placeholder="Discord Webhook URL">
+  <textarea id="msg">Pro test</textarea>
+  <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:document.getElementById('msg').value,url:'https://example.com',targets:['telegram:'+document.getElementById('tg').value,'discord:'+document.getElementById('dc').value],license:document.getElementById('license').value,clientId:'pt'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('r').textContent=JSON.stringify(d,null,2))">Send Relay</button>
+  <pre id="r"></pre>
+</body>
+</html>`);
+});
 // ─── Relay Endpoint ───
 app.post('/api/relay', async (req, res) => {
   try {

@@ -13,7 +13,7 @@ app.use(express.json());
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// Inline landing page for root
+// ─── Landing Page ───
 app.get('/', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -42,7 +42,7 @@ app.get('/', (req, res) => {
 </html>`);
 });
 
-// Inline payment page for /pay
+// ─── Payment Page ───
 app.get('/pay', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -130,7 +130,56 @@ app.get('/pay', (req, res) => {
 </html>`);
 });
 
-// Relay endpoint
+// ─── Mobile Test Page ───
+app.get('/test', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OmniRelay Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    input, textarea { width: 100%; margin: 0.5rem 0; padding: 0.6rem; box-sizing: border-box; }
+    button { background: #2563eb; color: white; padding: 0.8rem; border: none; border-radius: 6px; width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>Test OmniRelay</h2>
+  <input id="tg" placeholder="Telegram Chat ID (e.g. -100123456)">
+  <input id="dc" placeholder="Discord Webhook URL">
+  <textarea id="msg" rows="3" placeholder="Message..."></textarea>
+  <button onclick="send()">Send to Both</button>
+  <pre id="result"></pre>
+  <script>
+    async function send() {
+      const tg = document.getElementById('tg').value.trim();
+      const dc = document.getElementById('dc').value.trim();
+      const msg = document.getElementById('msg').value.trim();
+      const targets = [];
+      if (tg) targets.push('telegram:' + tg);
+      if (dc) targets.push('discord:' + dc);
+      const payload = {
+        text: msg || 'Test from OmniRelay',
+        url: 'https://example.com',
+        targets,
+        license: '',
+        clientId: 'mobile-test-' + Date.now()
+      };
+      const res = await fetch('/api/relay', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>`);
+});
+
+// ─── Relay Endpoint ───
 app.post('/api/relay', async (req, res) => {
   const { text, url, image, targets, license, clientId } = req.body;
   if (!text && !url && !image) return res.status(400).json({ error: 'No content' });
@@ -192,14 +241,17 @@ app.post('/api/relay', async (req, res) => {
   res.json({ success: true, sent: sentCount });
 });
 
+// ─── License Check ───
 app.post('/api/check-license', async (req, res) => {
   const { license } = req.body;
   const valid = await validateLicense(license);
   res.json({ valid });
 });
 
+// ─── Payment Routes ───
 app.use('/api/payment', payment);
 
+// ─── Admin Key Generation ───
 app.post('/api/admin/generate-key', async (req, res) => {
   const { adminSecret } = req.body;
   if (adminSecret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
@@ -211,6 +263,7 @@ app.post('/api/admin/generate-key', async (req, res) => {
   res.json({ key });
 });
 
+// ─── Start Server ───
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`OmniRelay backend on port ${PORT}`));
 

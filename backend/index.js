@@ -130,7 +130,7 @@ app.get('/pay', (req, res) => {
 </html>`);
 });
 
-// Temporary test page (remove after successful test)
+// ─── Temporary Test Page (uses raw relay, no DB) ───
 app.get('/test', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html>
@@ -146,7 +146,7 @@ app.get('/test', (req, res) => {
   </style>
 </head>
 <body>
-  <h2>Test OmniRelay</h2>
+  <h2>Test OmniRelay (Raw Relay - No DB)</h2>
   <form id="testForm">
     <input id="tg" placeholder="Telegram Chat ID (e.g. -1001234567890)" required>
     <input id="dc" placeholder="Discord Webhook URL" required>
@@ -169,22 +169,20 @@ app.get('/test', (req, res) => {
       resultDiv.textContent = 'Sending...';
 
       try {
-        const res = await fetch('/api/relay', {
+        const res = await fetch('/api/raw-relay', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: msg,
             url: 'https://example.com',
-            targets,
-            license: '',
-            clientId: 'mobile-test-' + Date.now()
+            targets
           })
         });
         const data = await res.json();
         if (data.success) {
-          resultDiv.textContent = '✅ Success!\\n' + JSON.stringify(data, null, 2);
+          resultDiv.textContent = '✅ Success!\n' + JSON.stringify(data, null, 2);
         } else {
-          resultDiv.textContent = '❌ Error:\\n' + JSON.stringify(data, null, 2);
+          resultDiv.textContent = '❌ Error:\n' + JSON.stringify(data, null, 2);
         }
       } catch (err) {
         resultDiv.textContent = 'Network error: ' + err.message;
@@ -194,73 +192,121 @@ app.get('/test', (req, res) => {
 </body>
 </html>`);
 });
-// ─── Relay Endpoint ───
-app.post('/api/relay', async (req, res) => {
-  const { text, url, image, targets, license, clientId } = req.body;
-  if (!text && !url && !image) return res.status(400).json({ error: 'No content' });
-  if (!targets || !Array.isArray(targets)) return res.status(400).json({ error: 'Targets required' });
 
-  let isPro = false;
-  if (license) {
-    isPro = await validateLicense(license);
-    if (!isPro) return res.status(403).json({ error: 'Invalid license' });
-  }
+// ─── Raw Relay (bypasses database, for testing) ───
+app.post('/api/raw-relay', async (req, res) => {
+  try {
+    const { text, url, targets } = req.body;
+    if (!targets || !Array.isArray(targets)) return res.status(400).json({ error: 'targets required' });
 
-  if (!isPro) {
-    if (!clientId) return res.status(400).json({ error: 'Client ID required for free tier' });
-    const telegramTargets = targets.filter(t => t.startsWith('telegram:'));
-    const discordTargets = targets.filter(t => t.startsWith('discord:'));
-    if (telegramTargets.length > 1 || discordTargets.length > 1)
-      return res.status(402).json({ error: 'Free tier allows only 1 Telegram and 1 Discord target. Upgrade to Pro.' });
-
-    if (!(await canAddTarget(clientId, targets)))
-      return res.status(402).json({ error: 'Free tier limited to 1 Telegram + 1 Discord. Remove a target first.' });
-
-    await trackFreeTarget(clientId, targets);
-  }
-
-  const watermark = isPro ? '' : '\n\n⚡ Sent via OmniRelay';
-  const sentCount = { telegram: 0, discord: 0 };
-
-  for (const target of targets) {
-    try {
-      if (target.startsWith('telegram:')) {
-        const chatId = target.slice(9);
-        const msgText = text + (url ? `\n\n🔗 ${url}` : '') + watermark;
-        await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          chat_id: chatId,
-          text: msgText,
-          parse_mode: 'HTML',
-          disable_web_page_preview: false,
-          reply_markup: url ? { inline_keyboard: [[{ text: 'Open Link', url }]] } : undefined
-        });
-        sentCount.telegram++;
-      } else if (target.startsWith('discord:')) {
-        const webhookUrl = target.slice(8);
-        await axios.post(webhookUrl, {
-          embeds: [{
-            title: text,
-            url: url || undefined,
-            image: image ? { url: image } : undefined,
-            footer: watermark ? { text: watermark.trim() } : undefined,
-            color: 0x00AE86
-          }]
-        });
-        sentCount.discord++;
+    const results = { telegram: false, discord: false };
+    for (const target of targets) {
+      try {
+        if (target.startsWith('telegram:')) {
+          const chatId = target.slice(9);
+          await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            chat_id: chatId,
+            text: (text || 'Test') + '\n\n⚡ Sent via OmniRelay',
+            disable_web_page_preview: true
+          });
+          results.telegram = true;
+        } else if (target.startsWith('discord:')) {
+          const webhookUrl = target.slice(8);
+          await axios.post(webhookUrl, {
+            content: text || 'Test',
+            embeds: [{
+              title: text,
+              footer: { text: '⚡ Sent via OmniRelay' }
+            }]
+          });
+          results.discord = true;
+        }
+      } catch (e) {
+        console.error('Raw send error:', e.response?.data || e.message);
       }
-    } catch (e) {
-      console.error('Send error:', e.response?.data || e.message);
     }
+    res.json({ success: true, results });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal error' });
   }
+});
 
-  res.json({ success: true, sent: sentCount });
+// ─── Main Relay Endpoint (with try/catch, uses DB) ───
+app.post('/api/relay', async (req, res) => {
+  try {
+    const { text, url, image, targets, license, clientId } = req.body;
+    if (!text && !url && !image) return res.status(400).json({ error: 'No content' });
+    if (!targets || !Array.isArray(targets)) return res.status(400).json({ error: 'Targets required' });
+
+    let isPro = false;
+    if (license) {
+      isPro = await validateLicense(license);
+      if (!isPro) return res.status(403).json({ error: 'Invalid license' });
+    }
+
+    if (!isPro) {
+      if (!clientId) return res.status(400).json({ error: 'Client ID required for free tier' });
+      const telegramTargets = targets.filter(t => t.startsWith('telegram:'));
+      const discordTargets = targets.filter(t => t.startsWith('discord:'));
+      if (telegramTargets.length > 1 || discordTargets.length > 1)
+        return res.status(402).json({ error: 'Free tier allows only 1 Telegram and 1 Discord target. Upgrade to Pro.' });
+
+      if (!(await canAddTarget(clientId, targets)))
+        return res.status(402).json({ error: 'Free tier limited to 1 Telegram + 1 Discord. Remove a target first.' });
+
+      await trackFreeTarget(clientId, targets);
+    }
+
+    const watermark = isPro ? '' : '\n\n⚡ Sent via OmniRelay';
+    const sentCount = { telegram: 0, discord: 0 };
+
+    for (const target of targets) {
+      try {
+        if (target.startsWith('telegram:')) {
+          const chatId = target.slice(9);
+          const msgText = text + (url ? `\n\n🔗 ${url}` : '') + watermark;
+          await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            chat_id: chatId,
+            text: msgText,
+            parse_mode: 'HTML',
+            disable_web_page_preview: false,
+            reply_markup: url ? { inline_keyboard: [[{ text: 'Open Link', url }]] } : undefined
+          });
+          sentCount.telegram++;
+        } else if (target.startsWith('discord:')) {
+          const webhookUrl = target.slice(8);
+          await axios.post(webhookUrl, {
+            embeds: [{
+              title: text,
+              url: url || undefined,
+              image: image ? { url: image } : undefined,
+              footer: watermark ? { text: watermark.trim() } : undefined,
+              color: 0x00AE86
+            }]
+          });
+          sentCount.discord++;
+        }
+      } catch (e) {
+        console.error('Send error:', e.response?.data || e.message);
+      }
+    }
+
+    res.json({ success: true, sent: sentCount });
+  } catch (error) {
+    console.error('Relay handler error:', error);
+    res.status(500).json({ error: 'Internal server error. Please check server logs.' });
+  }
 });
 
 // ─── License Check ───
 app.post('/api/check-license', async (req, res) => {
-  const { license } = req.body;
-  const valid = await validateLicense(license);
-  res.json({ valid });
+  try {
+    const { license } = req.body;
+    const valid = await validateLicense(license);
+    res.json({ valid });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal error' });
+  }
 });
 
 // ─── Payment Routes ───
@@ -268,14 +314,18 @@ app.use('/api/payment', payment);
 
 // ─── Admin Key Generation ───
 app.post('/api/admin/generate-key', async (req, res) => {
-  const { adminSecret } = req.body;
-  if (adminSecret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
-  const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
-  await db.execute({
-    sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
-    args: [key, 'pro']
-  });
-  res.json({ key });
+  try {
+    const { adminSecret } = req.body;
+    if (adminSecret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
+    const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
+    await db.execute({
+      sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
+      args: [key, 'pro']
+    });
+    res.json({ key });
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // ─── Start Server ───

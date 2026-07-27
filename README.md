@@ -1,4 +1,4 @@
-# ⚡ OmniRelay
+# OmniRelay
 
 Send web content to **Telegram** and **Discord** in one click.  
 Highlight text on any page, hit send, and OmniRelay instantly posts it to both

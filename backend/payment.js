@@ -4,7 +4,6 @@ const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 
-// Networks config
 const NETWORKS = {
   ethereum: {
     name: 'Ethereum (ERC-20)',
@@ -43,7 +42,6 @@ const NETWORKS = {
     name: 'Tron (TRC-20)',
     address: process.env.USDT_TRON_ADDRESS,
     api: `https://api.trongrid.io/v1/accounts/${process.env.USDT_TRON_ADDRESS}/transactions/trc20`,
-    // Tron verification handled separately
     parseTx: null
   }
 };
@@ -74,22 +72,23 @@ router.post('/verify', async (req, res) => {
   if (!net) return res.status(400).json({ error: 'Unsupported network' });
 
   // Check if already processed
-  if (db.prepare('SELECT * FROM payments WHERE tx_hash = ?').get(txHash))
-    return res.status(400).json({ error: 'Transaction already used' });
+  const existing = await db.execute({
+    sql: 'SELECT * FROM payments WHERE tx_hash = ?',
+    args: [txHash]
+  });
+  if (existing.rows.length > 0) return res.status(400).json({ error: 'Transaction already used' });
 
   try {
-    let amount, toAddress;
+    let amount;
     if (network === 'tron') {
-      // Tron
       const resp = await axios.get(net.api, { params: { limit: 50, contract_address: USDT_CONTRACTS.tron } });
       const txs = resp.data.data;
       const tx = txs.find(t => t.transaction_id === txHash);
       if (!tx) return res.status(400).json({ error: 'Transaction not found' });
       if (tx.to.toLowerCase() !== net.address.toLowerCase())
         return res.status(400).json({ error: 'Recipient address mismatch' });
-      amount = parseFloat(tx.value) / 1e6; // USDT TRC20 6 decimals
+      amount = parseFloat(tx.value) / 1e6;
     } else {
-      // EVM
       const response = await axios.get(net.api, {
         params: {
           module: 'account',
@@ -110,10 +109,15 @@ router.post('/verify', async (req, res) => {
     const PRICE_USD = 49;
     if (amount < PRICE_USD) return res.status(400).json({ error: `Insufficient payment. Received ${amount} USDT, expected ${PRICE_USD}.` });
 
-    // Generate license key
     const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
-    db.prepare('INSERT INTO licenses (key, type) VALUES (?, ?)').run(key, 'pro');
-    db.prepare('INSERT INTO payments (tx_hash, network, amount, license_key) VALUES (?, ?, ?, ?)').run(txHash, network, amount, key);
+    await db.execute({
+      sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
+      args: [key, 'pro']
+    });
+    await db.execute({
+      sql: 'INSERT INTO payments (tx_hash, network, amount, license_key) VALUES (?, ?, ?, ?)',
+      args: [txHash, network, amount, key]
+    });
 
     res.json({ success: true, licenseKey: key });
   } catch (err) {

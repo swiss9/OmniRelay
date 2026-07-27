@@ -137,7 +137,7 @@ app.get('/', (req, res) => {
 
     <br>
 
-    <a class="github-link" href="https://github.com/swiss9" target="_blank" rel="noopener">
+    <a class="github-link" href="https://github.com/swiss9/OmniRelay" target="_blank" rel="noopener">
       <svg viewBox="0 0 16 16" aria-hidden="true">
         <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
       </svg>
@@ -153,7 +153,7 @@ app.get('/', (req, res) => {
 </html>`);
 });
 
-// ─── Payment Page ───
+// ─── Payment Page (Redesigned network selector) ───
 app.get('/pay', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -180,7 +180,7 @@ app.get('/pay', (req, res) => {
       border: 1px solid #222;
       box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
       padding: 3rem 2.5rem;
-      max-width: 540px;
+      max-width: 580px;
       width: 100%;
       text-align: center;
     }
@@ -201,53 +201,94 @@ app.get('/pay', (req, res) => {
       font-size: 0.95rem;
       margin-bottom: 2rem;
     }
-    .section {
-      background: #111;
-      border: 1px solid #2a2a2a;
-      border-radius: 1.25rem;
-      padding: 1.75rem;
-      margin-bottom: 1.5rem;
+    .network-section {
+      margin-bottom: 2rem;
       text-align: left;
     }
-    label {
+    .network-section p {
+      font-weight: 600;
+      color: #ccc;
+      margin-bottom: 0.8rem;
+      font-size: 0.95rem;
+      letter-spacing: 0.01em;
+    }
+    .network-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .network-card {
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      border-radius: 1rem;
+      padding: 1rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+      color: #999;
+      font-size: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .network-card.active {
+      border-color: #ffffff;
+      background: #141414;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(255,255,255,0.05);
+    }
+    .network-card:hover {
+      border-color: #555;
+    }
+    .network-card .chain-icon {
+      font-size: 1.5rem;
+      opacity: 0.8;
+    }
+    .payment-details {
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+      transition: all 0.3s;
+    }
+    .detail-row {
+      margin-bottom: 1.2rem;
+    }
+    .detail-row label {
       display: block;
       font-weight: 600;
-      color: #cccccc;
-      margin-bottom: 0.4rem;
-      font-size: 0.9rem;
-    }
-    select, input {
-      width: 100%;
-      padding: 0.9rem 1rem;
-      margin-bottom: 1.2rem;
-      background: #0a0a0a;
-      border: 1px solid #333;
-      border-radius: 12px;
-      font-size: 1rem;
-      color: #ffffff;
-      transition: border-color 0.2s;
-      appearance: none;
-    }
-    select:focus, input:focus {
-      outline: none;
-      border-color: #ffffff;
-      box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+      color: #ccc;
+      font-size: 0.85rem;
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
     .address-box {
-      background: #0a0a0a;
-      padding: 0.9rem 1rem;
-      border-radius: 12px;
+      background: #050505;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
       font-family: 'SF Mono', 'Fira Code', monospace;
       word-break: break-all;
-      color: #ffffff;
-      border: 1px solid #333;
-      margin: 0.3rem 0 0.5rem;
+      color: #fff;
       font-size: 0.85rem;
+      margin-top: 0.2rem;
+    }
+    .address-box small {
+      color: #888;
+      display: block;
+      margin-top: 0.3rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
     }
     .note {
-      font-size: 0.8rem;
       color: #777;
-      margin-bottom: 0.6rem;
+      font-size: 0.8rem;
     }
     button {
       width: 100%;
@@ -262,6 +303,7 @@ app.get('/pay', (req, res) => {
       box-shadow: 0 4px 14px rgba(255,255,255,0.15);
       transition: background 0.25s, box-shadow 0.25s;
       letter-spacing: 0.02em;
+      margin-top: 0.5rem;
     }
     button:hover {
       background: #e5e5e5;
@@ -279,6 +321,7 @@ app.get('/pay', (req, res) => {
     .error { background: #2a0a0a; color: #f87171; border: 1px solid #7f1d1d; }
     @media (max-width: 480px) {
       .card { padding: 2rem 1.25rem; }
+      .network-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -288,22 +331,20 @@ app.get('/pay', (req, res) => {
     <h1>Upgrade to OmniRelay Pro</h1>
     <p class="subtitle">Lifetime access · Remove watermarks · Unlimited channels</p>
 
-    <div class="section">
-      <label for="network">Select payment network</label>
-      <select id="network">
-        <option value="ethereum">Ethereum (ERC‑20)</option>
-        <option value="bsc">BSC (BEP‑20)</option>
-        <option value="polygon">Polygon (ERC‑20)</option>
-        <option value="tron">Tron (TRC‑20)</option>
-      </select>
+    <div class="network-section">
+      <p>Choose payment network</p>
+      <div class="network-grid" id="networkGrid"></div>
+    </div>
 
-      <div id="paymentDetails" style="display:none;">
+    <div id="paymentDetails" class="payment-details" style="display:none;">
+      <div class="detail-row">
         <label>Send exactly 49 USDT to</label>
         <div class="address-box" id="walletAddress"></div>
-        <p class="note">USDT Contract: <span id="contract"></span></p>
-
-        <label for="txHash">Transaction Hash (TXID)</label>
-        <input type="text" id="txHash" placeholder="Paste your transaction hash here">
+        <small id="contractInfo" class="note" style="display:none;">Contract: <span id="contract"></span></small>
+      </div>
+      <div class="detail-row">
+        <label>Transaction Hash (TXID)</label>
+        <input type="text" id="txHash" placeholder="Paste your transaction hash here" style="width:100%; padding:0.9rem; background:#050505; border:1px solid #333; border-radius:10px; color:#fff; margin-top:0.3rem;">
       </div>
     </div>
 
@@ -313,31 +354,58 @@ app.get('/pay', (req, res) => {
 
   <script>
     const BACKEND = window.location.origin;
+    let networksData = {};
+    let selectedNetwork = 'ethereum';
+
     fetch(BACKEND + '/api/payment/info')
       .then(r => r.json())
       .then(data => {
-        window.networks = data;
-        document.getElementById('network').addEventListener('change', updateUI);
-        updateUI();
+        networksData = data;
+        renderNetworkCards();
+        updatePaymentDetails();
       });
 
-    function updateUI() {
-      const net = document.getElementById('network').value;
-      const info = window.networks[net];
+    function renderNetworkCards() {
+      const grid = document.getElementById('networkGrid');
+      grid.innerHTML = '';
+      const icons = { ethereum: '🔷', bsc: '🟡', polygon: '🟣', tron: '🔴' };
+      for (const [key, net] of Object.entries(networksData)) {
+        const card = document.createElement('div');
+        card.className = 'network-card' + (key === selectedNetwork ? ' active' : '');
+        card.innerHTML = '<span class="chain-icon">' + (icons[key] || '💎') + '</span>' + net.name;
+        card.addEventListener('click', () => {
+          selectedNetwork = key;
+          document.querySelectorAll('.network-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          updatePaymentDetails();
+        });
+        grid.appendChild(card);
+      }
+    }
+
+    function updatePaymentDetails() {
+      const info = networksData[selectedNetwork];
       if (!info) return;
-      document.getElementById('paymentDetails').style.display = 'block';
+      const detailsDiv = document.getElementById('paymentDetails');
+      detailsDiv.style.display = 'block';
       document.getElementById('walletAddress').textContent = info.address;
-      document.getElementById('contract').textContent = info.usdtContract;
+      const contractSpan = document.getElementById('contract');
+      const contractInfo = document.getElementById('contractInfo');
+      if (info.usdtContract && info.usdtContract !== 'N/A') {
+        contractSpan.textContent = info.usdtContract;
+        contractInfo.style.display = 'block';
+      } else {
+        contractInfo.style.display = 'none';
+      }
     }
 
     document.getElementById('verifyBtn').addEventListener('click', async () => {
-      const network = document.getElementById('network').value;
       const txHash = document.getElementById('txHash').value.trim();
       if (!txHash) return alert('Enter transaction hash');
       const res = await fetch(BACKEND + '/api/payment/verify', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ network, txHash })
+        body: JSON.stringify({ network: selectedNetwork, txHash })
       });
       const data = await res.json();
       const resultDiv = document.getElementById('result');

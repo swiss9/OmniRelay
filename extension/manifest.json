@@ -1,12 +1,29 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "OmniRelay",
-  "version": "1.0",
+  "version": "1.0.0",
   "description": "Send web content to Telegram & Discord with one click.",
-  "permissions": ["contextMenus", "storage", "activeTab"],
-  "host_permissions": ["<all_urls>"],
-  "background": { "service_worker": "background.js" },
-  "action": { "default_popup": "popup.html", "default_title": "OmniRelay" },
-  "options_ui": { "page": "options.html", "open_in_tab": true },
-  "icons": { "16": "icon.png", "48": "icon.png", "128": "icon.png" }
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "activeTab",
+    "notifications",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "OmniRelay"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
 }

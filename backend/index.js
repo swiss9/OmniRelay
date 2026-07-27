@@ -17,9 +17,15 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 // Serve static files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Explicit route for payment page (so /pay works without .html)
+// Explicit route for payment page with error handling
 app.get('/pay', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'pay.html'));
+  const filePath = path.join(__dirname, 'public', 'pay.html');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('pay.html not found:', err);
+      res.status(404).send('Payment page not found. Please contact support.');
+    }
+  });
 });
 
 // Relay endpoint

@@ -4,14 +4,15 @@ const TURSO_URL = process.env.TURSO_DB_URL.replace('libsql://', 'https://');
 const TURSO_TOKEN = process.env.TURSO_DB_TOKEN;
 
 async function execute(sql, args = []) {
-  // Turso HTTP pipeline API expects a "requests" array
+  const payload = {
+    requests: [
+      { type: 'execute', stmt: { sql, args } }
+    ]
+  };
+
   const response = await axios.post(
     `${TURSO_URL}/v2/pipeline`,
-    {
-      requests: [
-        { type: 'execute', stmt: { sql, args } }
-      ]
-    },
+    payload,
     {
       headers: {
         Authorization: `Bearer ${TURSO_TOKEN}`,
@@ -25,20 +26,24 @@ async function execute(sql, args = []) {
     throw new Error(result.error.message);
   }
 
-  // Format the response like the previous client (rows as arrays of objects)
-  const cols = result.columns || [];
-  const rows = (result.rows || []).map(row => {
-    const obj = {};
-    cols.forEach((col, i) => {
-      obj[col] = row[i];
+  // Handle both query and execute statements
+  if (result.result) {
+    // It's a write statement (INSERT/UPDATE/DELETE) – no columns
+    return { lastInsertRowid: result.result.lastInsertRowId, rowsAffected: result.result.rowsAffected };
+  } else {
+    // It's a query (SELECT) – return rows array
+    const cols = result.columns || [];
+    const rows = (result.rows || []).map(row => {
+      const obj = {};
+      cols.forEach((col, i) => {
+        obj[col] = row[i];
+      });
+      return obj;
     });
-    return obj;
-  });
-
-  return { rows };
+    return { rows };
+  }
 }
 
-// Keep the same init function (tables creation)
 async function initDb() {
   await execute(`
     CREATE TABLE IF NOT EXISTS licenses (
@@ -65,6 +70,7 @@ async function initDb() {
   `);
 }
 
+// Wait for table creation to finish before accepting requests
 initDb().catch(console.error);
 
 module.exports = { execute };

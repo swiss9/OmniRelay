@@ -130,7 +130,7 @@ app.get('/pay', (req, res) => {
 </html>`);
 });
 
-// ─── Temporary Test Page (uses raw relay, no DB) ───
+// ─── Temporary Test Page (bulletproof, no refresh) ───
 app.get('/test', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html>
@@ -140,54 +140,45 @@ app.get('/test', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: sans-serif; padding: 1rem; }
-    input, textarea { width: 100%; margin: 0.5rem 0; padding: 0.6rem; box-sizing: border-box; }
-    button { background: #2563eb; color: white; padding: 0.8rem; border: none; border-radius: 6px; width: 100%; }
+    input, textarea, button { width: 100%; margin: 0.5rem 0; padding: 0.6rem; box-sizing: border-box; }
+    button { background: #2563eb; color: white; border: none; border-radius: 6px; }
     #result { margin-top: 1rem; white-space: pre-wrap; background: #f3f4f6; padding: 0.8rem; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <h2>Test OmniRelay (Raw Relay - No DB)</h2>
-  <form id="testForm">
-    <input id="tg" placeholder="Telegram Chat ID (e.g. -1001234567890)" required>
+  <h2>Test OmniRelay (Raw Relay)</h2>
+  <form id="frm">
+    <input id="tg" placeholder="Telegram Chat ID" required>
     <input id="dc" placeholder="Discord Webhook URL" required>
     <textarea id="msg" rows="3" placeholder="Message (optional)"></textarea>
-    <button type="submit">Send to Both</button>
+    <button type="button" id="sendBtn">Send to Both</button>
   </form>
   <div id="result"></div>
 
   <script>
-    document.getElementById('testForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    document.getElementById('sendBtn').onclick = async function() {
       const tg = document.getElementById('tg').value.trim();
       const dc = document.getElementById('dc').value.trim();
       const msg = document.getElementById('msg').value.trim() || 'Test from OmniRelay';
       const targets = [];
       if (tg) targets.push('telegram:' + tg);
       if (dc) targets.push('discord:' + dc);
-
-      const resultDiv = document.getElementById('result');
-      resultDiv.textContent = 'Sending...';
-
+      
+      document.getElementById('result').textContent = 'Sending...';
       try {
         const res = await fetch('/api/raw-relay', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: msg,
-            url: 'https://example.com',
-            targets
-          })
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ text: msg, url: 'https://example.com', targets })
         });
         const data = await res.json();
-        if (data.success) {
-          resultDiv.textContent = '✅ Success!\n' + JSON.stringify(data, null, 2);
-        } else {
-          resultDiv.textContent = '❌ Error:\n' + JSON.stringify(data, null, 2);
-        }
-      } catch (err) {
-        resultDiv.textContent = 'Network error: ' + err.message;
+        document.getElementById('result').textContent = data.success ?
+          '✅ Success!\\n' + JSON.stringify(data, null, 2) :
+          '❌ Error:\\n' + JSON.stringify(data, null, 2);
+      } catch(e) {
+        document.getElementById('result').textContent = 'Network error: ' + e.message;
       }
-    });
+    };
   </script>
 </body>
 </html>`);

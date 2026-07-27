@@ -3,17 +3,14 @@ const axios = require('axios');
 const TURSO_URL = process.env.TURSO_DB_URL.replace('libsql://', 'https://');
 const TURSO_TOKEN = process.env.TURSO_DB_TOKEN;
 
-// Convert a plain value into a Turso typed argument
 function toTursoArg(value) {
   if (value === null || value === undefined) return { type: 'null' };
   if (typeof value === 'number') return { type: 'integer', value: Math.round(value) };
   if (typeof value === 'boolean') return { type: 'integer', value: value ? 1 : 0 };
-  // Everything else (strings, etc.) as text
   return { type: 'text', value: String(value) };
 }
 
 async function execute(query) {
-  // Accept both execute({ sql, args }) and execute(sql, args)
   let sql, args;
   if (typeof query === 'object' && query.sql) {
     sql = query.sql;
@@ -23,7 +20,6 @@ async function execute(query) {
     args = Array.isArray(arguments[1]) ? arguments[1] : [];
   }
 
-  // Convert plain args to typed args for Turso
   const typedArgs = args.map(toTursoArg);
 
   const payload = {
@@ -52,18 +48,21 @@ async function execute(query) {
       throw new Error(result.error.message);
     }
 
-    // Query result
-    if (result.columns) {
+    // Always build a `rows` array, even if columns are missing
+    let rows = [];
+    if (result.columns && result.rows) {
       const cols = result.columns;
-      const rows = (result.rows || []).map(row => {
+      rows = result.rows.map(row => {
         const obj = {};
         cols.forEach((col, i) => { obj[col] = row[i]; });
         return obj;
       });
-      return { rows };
     }
-    // Execute result (INSERT/UPDATE/DELETE)
-    return { lastInsertRowid: result.lastInsertRowId || null };
+    // Return rows + lastInsertRowid (if write operation)
+    return {
+      rows,
+      lastInsertRowid: result.lastInsertRowId || null
+    };
   } catch (err) {
     if (err.response && err.response.data) {
       throw new Error(`Turso API error (${err.response.status}): ${JSON.stringify(err.response.data)}`);

@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path');
 const db = require('./db');
 const { validateLicense, trackFreeTarget, canAddTarget } = require('./license');
 const payment = require('./payment');
@@ -13,8 +14,13 @@ app.use(express.json());
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// Serve static payment page
-app.use(express.static('public'));
+// Serve static files from 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Explicit route for payment page (so /pay works without .html)
+app.get('/pay', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'pay.html'));
+});
 
 // Relay endpoint
 app.post('/api/relay', async (req, res) => {
@@ -104,4 +110,4 @@ app.post('/api/admin/generate-key', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`OmniRelay backend on port ${PORT}`));
 
-module.exports = app; // for Vercel serverless
+module.exports = app;

@@ -3,9 +3,20 @@ const axios = require('axios');
 const TURSO_URL = process.env.TURSO_DB_URL.replace('libsql://', 'https://');
 const TURSO_TOKEN = process.env.TURSO_DB_TOKEN;
 
+// Convert a plain value to a Turso typed argument
+function toTursoArg(value) {
+  if (value === null || value === undefined) return { type: 'null' };
+  if (typeof value === 'number') return { type: 'integer', value: Math.round(value) };
+  if (typeof value === 'boolean') return { type: 'integer', value: value ? 1 : 0 };
+  // strings and everything else as text
+  return { type: 'text', value: String(value) };
+}
+
 async function execute(sql, args = []) {
+  const typedArgs = args.map(toTursoArg);
+
   const payload = {
-    requests: [{ type: 'execute', stmt: { sql, args } }]
+    requests: [{ type: 'execute', stmt: { sql, args: typedArgs } }]
   };
 
   try {
@@ -39,7 +50,6 @@ async function execute(sql, args = []) {
       return { lastInsertRowid };
     }
   } catch (err) {
-    // If the error is from axios and has a response, include the Turso response body
     if (err.response && err.response.data) {
       const detail = JSON.stringify(err.response.data);
       throw new Error(`Turso API error (${err.response.status}): ${detail}`);

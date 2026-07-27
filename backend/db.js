@@ -3,9 +3,10 @@ const { createClient } = require('@libsql/client');
 const db = createClient({
   url: process.env.TURSO_DB_URL,
   authToken: process.env.TURSO_DB_TOKEN,
+  // Prevent the client from running internal migrations that cause 400
+  fetch: global.fetch,
 });
 
-// Initialize tables (run once, idempotent)
 async function initDb() {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS licenses (

@@ -422,7 +422,8 @@ app.get('/pay', (req, res) => {
 </body>
 </html>`);
 });
-// TEMPORARY – test page (remove after testing)
+
+// ─── Temporary Test Page (remove after testing) ───
 app.get('/pro-test', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html>
@@ -441,8 +442,13 @@ app.get('/pro-test', (req, res) => {
 <body>
   <h2>🔐 Generate Pro Key</h2>
   <input type="password" id="s" placeholder="Admin Secret">
-  <button onclick="fetch('/api/admin/generate-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminSecret:document.getElementById('s').value})}).then(r=>r.json()).then(d=>document.getElementById('k').textContent=JSON.stringify(d, null, 2))">Generate Key</button>
+  <button onclick="fetch('/api/admin/generate-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminSecret:document.getElementById('s').value})}).then(r=>r.json()).then(d=>document.getElementById('k').textContent=JSON.stringify(d,null,2))">Generate Key</button>
   <pre id="k"></pre>
+
+  <h2>✅ Validate License</h2>
+  <input id="checkLicense" placeholder="License Key to check">
+  <button onclick="fetch('/api/check-license',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({license:document.getElementById('checkLicense').value.trim()})}).then(r=>r.json()).then(d=>document.getElementById('checkResult').textContent=JSON.stringify(d))">Check License</button>
+  <pre id="checkResult"></pre>
 
   <hr>
   <h2>📨 Test Relay</h2>
@@ -450,11 +456,12 @@ app.get('/pro-test', (req, res) => {
   <input id="tg" placeholder="Telegram Chat ID">
   <input id="dc" placeholder="Discord Webhook URL">
   <textarea id="msg">Pro test</textarea>
-  <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:document.getElementById('msg').value,url:'https://example.com',targets:['telegram:'+document.getElementById('tg').value,'discord:'+document.getElementById('dc').value],license:document.getElementById('license').value,clientId:'pt'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('r').textContent=JSON.stringify(d,null,2))">Send Relay</button>
+  <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:document.getElementById('msg').value,url:'https://example.com',targets:['telegram:'+document.getElementById('tg').value,'discord:'+document.getElementById('dc').value],license:document.getElementById('license').value.trim(),clientId:'pt'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('r').textContent=JSON.stringify(d,null,2))">Send Relay</button>
   <pre id="r"></pre>
 </body>
 </html>`);
 });
+
 // ─── Relay Endpoint ───
 app.post('/api/relay', async (req, res) => {
   try {
@@ -548,7 +555,6 @@ app.post('/api/admin/generate-key', async (req, res) => {
     });
     res.json({ key });
   } catch (error) {
-    // Return the actual error message for debugging
     res.status(500).json({ error: 'Database error', details: error.message });
   }
 });

@@ -549,17 +549,42 @@ app.post('/api/check-license', async (req, res) => {
 // ─── Payment Routes ───
 app.use('/api/payment', payment);
 
-// ─── Admin Key Generation (with detailed error) ───
-app.post('/api/admin/generate-key', async (req, res) => {
+// ─── Admin Key Generation (with detailed error) ───app.post('/api/admin/generate-key', async (req, res) => {
   try {
     const { adminSecret } = req.body;
     if (adminSecret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
-    const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
+
+    // Ensure the table exists
     await db.execute({
+      sql: `CREATE TABLE IF NOT EXISTS licenses (
+        key TEXT PRIMARY KEY,
+        type TEXT DEFAULT 'pro',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`
+    });
+
+    const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
+
+    // Insert the new key
+    const insertResult = await db.execute({
       sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
       args: [key, 'pro']
     });
-    res.json({ key });
+
+    // Verify it was stored by reading it back
+    const verify = await db.execute({
+      sql: 'SELECT * FROM licenses WHERE key = ?',
+      args: [key]
+    });
+
+    res.json({
+      key,
+      stored: verify.rows && verify.rows.length > 0,
+      debug: {
+        lastInsertRowid: insertResult.lastInsertRowid,
+        rowFromDB: verify.rows ? verify.rows[0] : null
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: 'Database error', details: error.message });
   }

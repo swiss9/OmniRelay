@@ -3,8 +3,17 @@ const axios = require('axios');
 const TURSO_URL = process.env.TURSO_DB_URL.replace('libsql://', 'https://');
 const TURSO_TOKEN = process.env.TURSO_DB_TOKEN;
 
+// Convert a plain value into a Turso typed argument
+function toTursoArg(value) {
+  if (value === null || value === undefined) return { type: 'null' };
+  if (typeof value === 'number') return { type: 'integer', value: Math.round(value) };
+  if (typeof value === 'boolean') return { type: 'integer', value: value ? 1 : 0 };
+  // Everything else (strings, etc.) as text
+  return { type: 'text', value: String(value) };
+}
+
 async function execute(query) {
-  // Accept both execute(sql, args) and execute({ sql, args })
+  // Accept both execute({ sql, args }) and execute(sql, args)
   let sql, args;
   if (typeof query === 'object' && query.sql) {
     sql = query.sql;
@@ -14,11 +23,14 @@ async function execute(query) {
     args = Array.isArray(arguments[1]) ? arguments[1] : [];
   }
 
+  // Convert plain args to typed args for Turso
+  const typedArgs = args.map(toTursoArg);
+
   const payload = {
     requests: [
       {
         type: 'execute',
-        stmt: { sql, args }   // args as plain values (strings, numbers)
+        stmt: { sql, args: typedArgs }
       }
     ]
   };

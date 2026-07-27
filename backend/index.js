@@ -533,10 +533,16 @@ app.post('/api/relay', async (req, res) => {
 app.post('/api/check-license', async (req, res) => {
   try {
     const { license } = req.body;
-    const valid = await validateLicense(license);
-    res.json({ valid });
+    // Call validateLicense but also get raw result for debugging
+    const result = await db.execute({
+      sql: 'SELECT * FROM licenses WHERE key = ?',
+      args: [license.trim()]
+    });
+    const valid = result.rows && result.rows.length > 0;
+    // Return both the validation result and the raw query data
+    res.json({ valid, debug: { rowCount: result.rows ? result.rows.length : 0, rows: result.rows } });
   } catch (error) {
-    res.status(500).json({ error: 'Internal error' });
+    res.status(500).json({ error: 'Internal error', details: error.message });
   }
 });
 

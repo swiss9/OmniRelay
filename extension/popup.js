@@ -1,11 +1,15 @@
+if (typeof browser === 'undefined') {
+  var browser = chrome;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (tab) {
     document.getElementById('pageInfo').textContent = `Page: ${tab.title.substring(0, 60)}`;
     document.getElementById('text').value = tab.title + '\n' + tab.url;
   }
 
-  const config = await chrome.storage.local.get(['telegramChatId', 'discordWebhook', 'license', 'backendUrl']);
+  const config = await browser.storage.local.get(['telegramChatId', 'discordWebhook', 'license', 'backendUrl']);
   if (!config.backendUrl) {
     document.getElementById('result').textContent = 'Please set backend URL in Options.';
     return;
@@ -23,6 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('result').textContent = 'No targets configured. Go to Options.';
     return;
   }
+
   document.getElementById('targetsSection').style.display = 'block';
   targets.forEach(t => {
     const cb = document.createElement('input');
@@ -43,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectedTargets = Array.from(document.querySelectorAll('#targetsCheckboxes input:checked')).map(cb => cb.value);
     if (selectedTargets.length === 0) return alert('Select at least one target');
     if (!text && !tab?.url) return alert('No message');
+
     const payload = {
       text,
       url: tab.url,
@@ -50,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       license: config.license || '',
       clientId: await getClientId()
     };
+
     try {
       const res = await fetch(`${config.backendUrl}/api/relay`, {
         method: 'POST',
@@ -69,10 +76,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function getClientId() {
-  let { clientId } = await chrome.storage.local.get('clientId');
+  let { clientId } = await browser.storage.local.get('clientId');
   if (!clientId) {
     clientId = crypto.randomUUID();
-    await chrome.storage.local.set({ clientId });
+    await browser.storage.local.set({ clientId });
   }
   return clientId;
-      }
+                  }

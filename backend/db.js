@@ -3,13 +3,6 @@ const axios = require('axios');
 const TURSO_URL = process.env.TURSO_DB_URL.replace('libsql://', 'https://');
 const TURSO_TOKEN = process.env.TURSO_DB_TOKEN;
 
-function toTursoArg(value) {
-  if (value === null || value === undefined) return { type: 'null' };
-  if (typeof value === 'number') return { type: 'integer', value: Math.round(value) };
-  if (typeof value === 'boolean') return { type: 'integer', value: value ? 1 : 0 };
-  return { type: 'text', value: String(value) };
-}
-
 async function execute(query) {
   let sql, args;
   if (typeof query === 'object' && query.sql) {
@@ -20,20 +13,11 @@ async function execute(query) {
     args = Array.isArray(arguments[1]) ? arguments[1] : [];
   }
 
-  const typedArgs = args.map(toTursoArg);
-
-  const payload = {
-    requests: [
-      {
-        type: 'execute',
-        stmt: { sql, args: typedArgs }
-      }
-    ]
-  };
+  const payload = { sql, args };
 
   try {
     const response = await axios.post(
-      `${TURSO_URL}/v2/pipeline`,
+      `${TURSO_URL}/v2/execute`,
       payload,
       {
         headers: {
@@ -43,25 +27,22 @@ async function execute(query) {
       }
     );
 
-    const result = response.data.results[0];
-    if (result.type === 'error') {
-      throw new Error(result.error.message);
+    const data = response.data;
+
+    // For write statements, the response contains `results` and `last_insert_rowid`
+    // For queries, `results` is an array of rows with column names.
+    if (data.results && Array.isArray(data.results)) {
+      // Query result
+      return {
+        rows: data.results,
+        lastInsertRowid: data.last_insert_rowid || null
+      };
     }
 
-    // Always build a `rows` array, even if columns are missing
-    let rows = [];
-    if (result.columns && result.rows) {
-      const cols = result.columns;
-      rows = result.rows.map(row => {
-        const obj = {};
-        cols.forEach((col, i) => { obj[col] = row[i]; });
-        return obj;
-      });
-    }
-    // Return rows + lastInsertRowid (if write operation)
+    // For statements that don't return rows (e.g., DDL), just return the lastInsertRowid
     return {
-      rows,
-      lastInsertRowid: result.lastInsertRowId || null
+      rows: [],
+      lastInsertRowid: data.last_insert_rowid || null
     };
   } catch (err) {
     if (err.response && err.response.data) {

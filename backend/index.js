@@ -21,11 +21,13 @@ app.get('/', (req, res) => {
   <meta charset="UTF-8">
   <title>OmniRelay – Cross‑Platform Dispatcher</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="https://i.ibb.co/QjtH2qtx/1000176798.png">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #f8faff 0%, #eef0f5 100%);
+      background: #000000;
+      color: #ffffff;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -33,86 +35,117 @@ app.get('/', (req, res) => {
       padding: 2rem;
     }
     .card {
-      background: white;
-      border-radius: 2rem;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.04);
-      padding: 3rem 2rem;
-      max-width: 560px;
+      background: #0a0a0a;
+      border-radius: 2.5rem;
+      border: 1px solid #222;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
+      padding: 3rem 2.5rem;
+      max-width: 520px;
       width: 100%;
       text-align: center;
       position: relative;
-      overflow: hidden;
+      transition: border-color 0.3s;
     }
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #00e5ff, #2c3ecc, #8a2be2);
+    .card:hover {
+      border-color: #333;
     }
     .logo {
-      width: 80px;
+      width: 90px;
       height: auto;
       margin-bottom: 1.5rem;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
     }
     h1 {
-      font-size: 2.5rem;
+      font-size: 3rem;
       font-weight: 800;
-      background: linear-gradient(135deg, #2c3ecc, #8a2be2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.75rem;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
     }
     .tagline {
-      font-size: 1.1rem;
-      color: #4b5563;
-      margin-bottom: 2rem;
+      font-size: 1.15rem;
+      color: #a0a0a0;
+      margin-bottom: 2.5rem;
       line-height: 1.6;
     }
     .btn {
       display: inline-block;
-      padding: 0.9rem 2.5rem;
-      background: linear-gradient(135deg, #00e5ff, #2c3ecc);
-      color: white;
+      padding: 1rem 2.5rem;
+      background: #ffffff;
+      color: #000000;
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1rem;
       border-radius: 50px;
       text-decoration: none;
-      box-shadow: 0 10px 20px rgba(0, 229, 255, 0.3);
-      transition: transform 0.2s, box-shadow 0.2s;
-      margin-bottom: 1.5rem;
-      border: none;
-      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: background 0.25s, box-shadow 0.25s;
+      box-shadow: 0 4px 14px rgba(255,255,255,0.15);
+      margin-bottom: 2rem;
     }
     .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 25px rgba(0, 229, 255, 0.4);
+      background: #e5e5e5;
+      box-shadow: 0 6px 20px rgba(255,255,255,0.25);
+    }
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #888;
+      text-decoration: none;
+      font-size: 0.9rem;
+      border: 1px solid #333;
+      padding: 0.65rem 1.4rem;
+      border-radius: 50px;
+      transition: all 0.2s;
+      margin-bottom: 1.5rem;
+    }
+    .github-link:hover {
+      color: #fff;
+      border-color: #555;
+      background: #111;
+    }
+    .github-link svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
     }
     .footer-note {
-      font-size: 0.9rem;
-      color: #9ca3af;
+      font-size: 0.85rem;
+      color: #666;
     }
     .footer-note a {
-      color: #2c3ecc;
-      text-decoration: none;
+      color: #aaa;
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
     @media (max-width: 480px) {
       .card { padding: 2rem 1.5rem; }
-      h1 { font-size: 2rem; }
+      h1 { font-size: 2.4rem; }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <img src="https://i.ibb.co/Gf1h84RX/android-chrome-512x512.png" alt="OmniRelay logo" class="logo">
+    <img src="https://i.ibb.co/QjtH2qtx/1000176798.png" alt="OmniRelay logo" class="logo">
     <h1>OmniRelay</h1>
-    <p class="tagline">Send web content to Telegram & Discord in one click.<br>Free tier with watermark – upgrade to remove it.</p>
-    <a class="btn" href="/pay">Upgrade to Pro ($49)</a>
+    <p class="tagline">
+      Send web content to Telegram & Discord in one click.<br>
+      Free tier includes a subtle watermark.
+    </p>
+
+    <a class="btn" href="/pay">Upgrade to Pro – $49</a>
+
+    <br>
+
+    <a class="github-link" href="https://github.com/swiss9" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+      View on GitHub
+    </a>
+
     <div class="footer-note">
-      Already have a license? <a href="#">Configure your browser extension</a>.<br>
+      Already have a license? <a href="#">Configure your extension</a>.<br>
       Payments in USDT (ETH, BSC, Polygon, Tron).
     </div>
   </div>
@@ -128,11 +161,13 @@ app.get('/pay', (req, res) => {
   <meta charset="UTF-8">
   <title>OmniRelay Pro – Upgrade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="https://i.ibb.co/QjtH2qtx/1000176798.png">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #f8faff 0%, #eef0f5 100%);
+      background: #000000;
+      color: #ffffff;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -140,99 +175,97 @@ app.get('/pay', (req, res) => {
       padding: 2rem;
     }
     .card {
-      background: white;
-      border-radius: 2rem;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.04);
-      padding: 3rem 2rem;
-      max-width: 560px;
+      background: #0a0a0a;
+      border-radius: 2.5rem;
+      border: 1px solid #222;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
+      padding: 3rem 2.5rem;
+      max-width: 540px;
       width: 100%;
       text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #00e5ff, #2c3ecc, #8a2be2);
     }
     .logo-sm {
-      width: 48px;
+      width: 55px;
       height: auto;
-      margin-bottom: 1rem;
+      margin-bottom: 1.25rem;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.2));
     }
     h1 {
-      font-size: 1.8rem;
+      font-size: 2rem;
       font-weight: 800;
-      color: #1f2937;
-      margin-bottom: 0.25rem;
+      color: #ffffff;
+      margin-bottom: 0.4rem;
     }
     .subtitle {
-      color: #6b7280;
+      color: #a0a0a0;
       font-size: 0.95rem;
       margin-bottom: 2rem;
     }
     .section {
-      background: #f9fafb;
-      border-radius: 1rem;
-      padding: 1.5rem;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 1.25rem;
+      padding: 1.75rem;
       margin-bottom: 1.5rem;
       text-align: left;
-      border: 1px solid #e5e7eb;
     }
     label {
       display: block;
       font-weight: 600;
-      color: #374151;
-      margin-bottom: 0.25rem;
+      color: #cccccc;
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
     }
-    select, input, button {
+    select, input {
       width: 100%;
-      padding: 0.8rem 1rem;
-      margin-top: 0.25rem;
-      margin-bottom: 1rem;
-      border: 1px solid #d1d5db;
+      padding: 0.9rem 1rem;
+      margin-bottom: 1.2rem;
+      background: #0a0a0a;
+      border: 1px solid #333;
       border-radius: 12px;
       font-size: 1rem;
-      background: white;
+      color: #ffffff;
       transition: border-color 0.2s;
+      appearance: none;
     }
     select:focus, input:focus {
       outline: none;
-      border-color: #2c3ecc;
-      box-shadow: 0 0 0 3px rgba(44, 62, 204, 0.1);
+      border-color: #ffffff;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+    }
+    .address-box {
+      background: #0a0a0a;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      word-break: break-all;
+      color: #ffffff;
+      border: 1px solid #333;
+      margin: 0.3rem 0 0.5rem;
+      font-size: 0.85rem;
+    }
+    .note {
+      font-size: 0.8rem;
+      color: #777;
+      margin-bottom: 0.6rem;
     }
     button {
-      background: linear-gradient(135deg, #00e5ff, #2c3ecc);
-      color: white;
+      width: 100%;
+      padding: 1rem;
+      background: #ffffff;
+      color: #000000;
       font-weight: 700;
+      font-size: 1rem;
       border: none;
       border-radius: 50px;
       cursor: pointer;
-      box-shadow: 0 10px 20px rgba(0, 229, 255, 0.3);
-      transition: transform 0.2s, box-shadow 0.2s;
-      margin-top: 1rem;
+      box-shadow: 0 4px 14px rgba(255,255,255,0.15);
+      transition: background 0.25s, box-shadow 0.25s;
+      letter-spacing: 0.02em;
     }
     button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 25px rgba(0, 229, 255, 0.4);
-    }
-    .address-box {
-      background: #f3f4f6;
-      padding: 0.8rem 1rem;
-      border-radius: 12px;
-      font-family: monospace;
-      word-break: break-all;
-      color: #1f2937;
-      margin: 0.5rem 0 0.25rem;
-    }
-    .note {
-      font-size: 0.85rem;
-      color: #6b7280;
-      margin-bottom: 0.5rem;
+      background: #e5e5e5;
+      box-shadow: 0 6px 20px rgba(255,255,255,0.25);
     }
     #result {
       margin-top: 1.5rem;
@@ -240,9 +273,10 @@ app.get('/pay', (req, res) => {
       border-radius: 12px;
       display: none;
       font-weight: 500;
+      font-size: 0.95rem;
     }
-    .success { background: #d1fae5; color: #065f46; }
-    .error { background: #fee2e2; color: #991b1b; }
+    .success { background: #0a2a1a; color: #4ade80; border: 1px solid #166534; }
+    .error { background: #2a0a0a; color: #f87171; border: 1px solid #7f1d1d; }
     @media (max-width: 480px) {
       .card { padding: 2rem 1.25rem; }
     }
@@ -250,17 +284,17 @@ app.get('/pay', (req, res) => {
 </head>
 <body>
   <div class="card">
-    <img src="https://i.ibb.co/Gf1h84RX/android-chrome-512x512.png" alt="OmniRelay logo" class="logo-sm">
+    <img src="https://i.ibb.co/QjtH2qtx/1000176798.png" alt="OmniRelay logo" class="logo-sm">
     <h1>Upgrade to OmniRelay Pro</h1>
-    <p class="subtitle">Lifetime access — $49. Remove watermarks & unlock unlimited channels.</p>
+    <p class="subtitle">Lifetime access · Remove watermarks · Unlimited channels</p>
 
     <div class="section">
       <label for="network">Select payment network</label>
       <select id="network">
-        <option value="ethereum">Ethereum (ERC-20)</option>
-        <option value="bsc">BSC (BEP-20)</option>
-        <option value="polygon">Polygon (ERC-20)</option>
-        <option value="tron">Tron (TRC-20)</option>
+        <option value="ethereum">Ethereum (ERC‑20)</option>
+        <option value="bsc">BSC (BEP‑20)</option>
+        <option value="polygon">Polygon (ERC‑20)</option>
+        <option value="tron">Tron (TRC‑20)</option>
       </select>
 
       <div id="paymentDetails" style="display:none;">
@@ -268,8 +302,8 @@ app.get('/pay', (req, res) => {
         <div class="address-box" id="walletAddress"></div>
         <p class="note">USDT Contract: <span id="contract"></span></p>
 
-        <label for="txHash">Transaction hash (TXID)</label>
-        <input type="text" id="txHash" placeholder="Paste the transaction hash here">
+        <label for="txHash">Transaction Hash (TXID)</label>
+        <input type="text" id="txHash" placeholder="Paste your transaction hash here">
       </div>
     </div>
 

@@ -529,17 +529,15 @@ app.post('/api/relay', async (req, res) => {
   }
 });
 
-// ─── License Check ───
+// ─── License Check (with debug) ───
 app.post('/api/check-license', async (req, res) => {
   try {
     const { license } = req.body;
-    // Call validateLicense but also get raw result for debugging
     const result = await db.execute({
       sql: 'SELECT * FROM licenses WHERE key = ?',
       args: [license.trim()]
     });
     const valid = result.rows && result.rows.length > 0;
-    // Return both the validation result and the raw query data
     res.json({ valid, debug: { rowCount: result.rows ? result.rows.length : 0, rows: result.rows } });
   } catch (error) {
     res.status(500).json({ error: 'Internal error', details: error.message });
@@ -549,12 +547,13 @@ app.post('/api/check-license', async (req, res) => {
 // ─── Payment Routes ───
 app.use('/api/payment', payment);
 
-// ─── Admin Key Generation (with detailed error) ───app.post('/api/admin/generate-key', async (req, res) => {
+// ─── Admin Key Generation (ensures table exists, no verify) ───
+app.post('/api/admin/generate-key', async (req, res) => {
   try {
     const { adminSecret } = req.body;
     if (adminSecret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
 
-    // Ensure the table exists
+    // Ensure the licenses table exists
     await db.execute({
       sql: `CREATE TABLE IF NOT EXISTS licenses (
         key TEXT PRIMARY KEY,
@@ -564,27 +563,12 @@ app.use('/api/payment', payment);
     });
 
     const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
-
-    // Insert the new key
-    const insertResult = await db.execute({
+    await db.execute({
       sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
       args: [key, 'pro']
     });
 
-    // Verify it was stored by reading it back
-    const verify = await db.execute({
-      sql: 'SELECT * FROM licenses WHERE key = ?',
-      args: [key]
-    });
-
-    res.json({
-      key,
-      stored: verify.rows && verify.rows.length > 0,
-      debug: {
-        lastInsertRowid: insertResult.lastInsertRowid,
-        rowFromDB: verify.rows ? verify.rows[0] : null
-      }
-    });
+    res.json({ key });
   } catch (error) {
     res.status(500).json({ error: 'Database error', details: error.message });
   }

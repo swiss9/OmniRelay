@@ -1,4 +1,4 @@
-# OmniRelay
+# ⚡ OmniRelay
 
 Send web content to **Telegram** and **Discord** in one click.  
 Highlight text on any page, hit send, and OmniRelay instantly posts it to both
@@ -36,14 +36,25 @@ and creators.
 
 ## 🛠️ Self‑Hosting the Backend
 
-OmniRelay's backend is open source. You can deploy your own instance in minutes.
+OmniRelay's backend is open source **for the free tier**. You can deploy your
+own instance, but please respect the license:
 
-1. Clone this repository and navigate to `backend/`.
-2. Set environment variables:  
-   `TELEGRAM_BOT_TOKEN`, `TURSO_DB_URL`, `TURSO_DB_TOKEN`, `ADMIN_SECRET`, and the
-   USDT wallet addresses for the payment page.
-3. Deploy to Vercel (free) or any Node.js host.
-4. Point the extension's `Backend URL` to your new instance.
+1. **You are allowed to**  
+   - Clone and run the code for personal or community use with the free tier
+     (watermark + limited targets).
+   - Modify the code to fit your needs **as long as you do not disable the
+     Pro restrictions** (license check, watermark, target limits).
+   - Contribute improvements back to the project.
+
+2. **You are NOT allowed to**  
+   - Modify the code to bypass the license‑key verification, remove the
+     watermark, or raise the free‑tier limits unless you have purchased a
+     Pro license.
+   - Redistribute a version that has the Pro features unlocked without
+     permission.
+
+If you need the Pro features on your self‑hosted server, [upgrade here](/pay)
+and you’ll receive a license key that works with any instance.
 
 ---
 
@@ -60,7 +71,9 @@ Remove the watermark and send to unlimited Telegram/Discord channels.
 
 ## 📜 License
 
-MIT – see the [LICENSE](LICENSE) file.
+This project is released under the **OmniRelay Source License 1.0** – see the
+[LICENSE](LICENSE) file. It’s based on the MIT License with an additional
+anti‑circumvention clause that protects the Pro upgrade model.
 
 ---
 

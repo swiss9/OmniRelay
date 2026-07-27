@@ -5,6 +5,7 @@ const axios = require('axios');
 const db = require('./db');
 const { validateLicense, trackFreeTarget, canAddTarget } = require('./license');
 const payment = require('./payment');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 app.use(cors());
@@ -23,11 +24,11 @@ app.post('/api/relay', async (req, res) => {
 
   let isPro = false;
   if (license) {
-    isPro = validateLicense(license);
+    isPro = await validateLicense(license);
     if (!isPro) return res.status(403).json({ error: 'Invalid license' });
   }
 
-  // For free tier: check target limits (1 Telegram + 1 Discord)
+  // Free tier target limits
   if (!isPro) {
     if (!clientId) return res.status(400).json({ error: 'Client ID required for free tier' });
     const telegramTargets = targets.filter(t => t.startsWith('telegram:'));
@@ -35,12 +36,10 @@ app.post('/api/relay', async (req, res) => {
     if (telegramTargets.length > 1 || discordTargets.length > 1)
       return res.status(402).json({ error: 'Free tier allows only 1 Telegram and 1 Discord target. Upgrade to Pro.' });
 
-    // Check if this client already has different targets registered
-    if (!canAddTarget(clientId, targets))
+    if (!(await canAddTarget(clientId, targets)))
       return res.status(402).json({ error: 'Free tier limited to 1 Telegram + 1 Discord. Remove a target first.' });
 
-    // Track targets
-    trackFreeTarget(clientId, targets);
+    await trackFreeTarget(clientId, targets);
   }
 
   const watermark = isPro ? '' : '\n\n⚡ Sent via OmniRelay';
@@ -80,10 +79,10 @@ app.post('/api/relay', async (req, res) => {
   res.json({ success: true, sent: sentCount });
 });
 
-// License check endpoint (for Options page)
-app.post('/api/check-license', (req, res) => {
+// License check endpoint
+app.post('/api/check-license', async (req, res) => {
   const { license } = req.body;
-  const valid = validateLicense(license);
+  const valid = await validateLicense(license);
   res.json({ valid });
 });
 
@@ -91,14 +90,18 @@ app.post('/api/check-license', (req, res) => {
 app.use('/api/payment', payment);
 
 // Admin key generation (protected)
-app.post('/api/admin/generate-key', (req, res) => {
+app.post('/api/admin/generate-key', async (req, res) => {
   const { adminSecret } = req.body;
   if (adminSecret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
-  const { v4: uuidv4 } = require('uuid');
   const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
-  db.prepare('INSERT INTO licenses (key, type) VALUES (?, ?)').run(key, 'pro');
+  await db.execute({
+    sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
+    args: [key, 'pro']
+  });
   res.json({ key });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`OmniRelay backend on port ${PORT}`));
+
+module.exports = app; // for Vercel serverless

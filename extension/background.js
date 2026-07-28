@@ -1,9 +1,7 @@
-// Polyfill for Chrome compatibility (no-op in Firefox, but won't hurt)
 if (typeof browser === 'undefined') {
   var browser = chrome;
 }
 
-// Context menu: send selected text
 browser.runtime.onInstalled.addListener(() => {
   browser.contextMenus.create({
     id: 'sendSelection',
@@ -20,7 +18,6 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
     const targets = [];
     if (config.telegramChatId) targets.push(`telegram:${config.telegramChatId}`);
     if (config.discordWebhook) targets.push(`discord:${config.discordWebhook}`);
-
     if (targets.length === 0) return;
 
     const payload = {
@@ -71,4 +68,4 @@ async function getClientId() {
     await browser.storage.local.set({ clientId });
   }
   return clientId;
-      }
+}

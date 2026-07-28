@@ -1,24 +1,86 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>OmniRelay</title>
   <style>
-    body { width: 300px; padding: 1rem; font-family: system-ui; }
-    textarea, input, select, button { width: 100%; margin: 0.5rem 0; padding: 0.5rem; box-sizing: border-box; }
-    button { background: #2563eb; color: white; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .status { font-size: 0.8rem; color: #6b7280; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 300px;
+      padding: 1.2rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+    }
+    .logo {
+      display: block;
+      width: 40px;
+      height: auto;
+      margin: 0 auto 0.8rem;
+    }
+    h3 {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+    textarea, input {
+      width: 100%;
+      padding: 0.6rem;
+      margin: 0.4rem 0;
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #111;
+      color: #fff;
+      font-size: 0.9rem;
+      resize: vertical;
+    }
+    label {
+      font-size: 0.8rem;
+      color: #aaa;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 0.5rem;
+      background: #fff;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status {
+      font-size: 0.7rem;
+      color: #888;
+      margin: 0.3rem 0;
+    }
+    #result {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: #4ade80;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
-  <h3>⚡ OmniRelay</h3>
+  <img src="https://i.ibb.co/QjtH2qtx/1000176798.png" alt="OmniRelay" class="logo">
+  <h3>OmniRelay</h3>
   <textarea id="text" rows="3" placeholder="Message text..."></textarea>
   <div class="status" id="pageInfo"></div>
   <div id="targetsSection" style="display:none;">
     <label>Send to:</label>
     <div id="targetsCheckboxes"></div>
   </div>
-  <button id="sendBtn">Send</button>
+  <button id="sendBtn" disabled>Send</button>
   <div id="result"></div>
   <script src="popup.js"></script>
 </body>

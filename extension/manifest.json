@@ -29,7 +29,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "omnirelay@swiss9.addon",
-      "data_collection_permissions": []
+      "data_collection_permissions": {}
     }
   }
 }

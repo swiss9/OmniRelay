@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "description": "Send web content to Telegram & Discord with one click.",
   "icons": {
-    "16": "icon.png",
-    "48": "icon.png",
+    "16": "icon-16.png",
+    "48": "icon-48.png",
     "128": "icon.png"
   },
   "permissions": [

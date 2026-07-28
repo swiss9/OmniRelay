@@ -11,11 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('saveBtn').addEventListener('click', () => {
+    const licenseValue = document.getElementById('license').value.trim();
     browser.storage.local.set({
       backendUrl: document.getElementById('backendUrl').value.trim(),
       telegramChatId: document.getElementById('telegramChatId').value.trim(),
       discordWebhook: document.getElementById('discordWebhook').value.trim(),
-      license: document.getElementById('license').value.trim()
+      license: licenseValue
     }, () => {
       document.getElementById('saveStatus').textContent = 'Saved.';
       setTimeout(() => { document.getElementById('saveStatus').textContent = ''; }, 2000);
@@ -25,6 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('checkLicenseBtn').addEventListener('click', async () => {
     const backendUrl = document.getElementById('backendUrl').value.trim();
     const license = document.getElementById('license').value.trim();
+    if (!backendUrl) {
+      document.getElementById('licenseStatus').textContent = 'Set backend URL first.';
+      return;
+    }
     const res = await fetch(`${backendUrl}/api/check-license`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

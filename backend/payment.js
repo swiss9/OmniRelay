@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const db = require('./db');
+const redis = require('./db');
 const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 
@@ -53,11 +53,9 @@ router.post('/verify', async (req, res) => {
   const net = NETWORKS[network];
   if (!net) return res.status(400).json({ error: 'Unsupported network' });
 
-  const existing = await db.execute({
-    sql: 'SELECT * FROM payments WHERE tx_hash = ?',
-    args: [txHash]
-  });
-  if (existing.rows.length > 0) return res.status(400).json({ error: 'Transaction already used' });
+  // Check for duplicate payment
+  const alreadyUsed = await redis.exists(`payment:${txHash}`);
+  if (alreadyUsed) return res.status(400).json({ error: 'Transaction already used' });
 
   try {
     let amount;
@@ -91,14 +89,10 @@ router.post('/verify', async (req, res) => {
     if (amount < PRICE_USD) return res.status(400).json({ error: `Insufficient payment. Received ${amount} USDT, expected ${PRICE_USD}.` });
 
     const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
-    await db.execute({
-      sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
-      args: [key, 'pro']
-    });
-    await db.execute({
-      sql: 'INSERT INTO payments (tx_hash, network, amount, license_key) VALUES (?, ?, ?, ?)',
-      args: [txHash, network, amount, key]
-    });
+
+    // Store license key and mark payment
+    await redis.sadd('licenses', key);
+    await redis.set(`payment:${txHash}`, key);
 
     res.json({ success: true, licenseKey: key });
   } catch (err) {

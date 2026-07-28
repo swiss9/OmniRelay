@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const config = await browser.storage.local.get(['telegramChatId', 'discordWebhook', 'license', 'backendUrl']);
   if (!config.backendUrl) {
-    document.getElementById('result').textContent = 'Please set backend URL in Options.';
+    document.getElementById('result').textContent = 'Set backend URL in Options.';
     return;
   }
 
@@ -38,11 +38,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const label = document.createElement('label');
     label.htmlFor = t.id;
     label.textContent = t.label;
+    label.style.color = '#ccc';
+    label.style.marginLeft = '0.4rem';
     targetsContainer.appendChild(cb);
     targetsContainer.appendChild(label);
     targetsContainer.appendChild(document.createElement('br'));
   });
 
+  document.getElementById('sendBtn').disabled = false;
   document.getElementById('sendBtn').addEventListener('click', async () => {
     const text = document.getElementById('text').value;
     const selectedTargets = Array.from(document.querySelectorAll('#targetsCheckboxes input:checked')).map(cb => cb.value);
@@ -53,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       text,
       url: tab.url,
       targets: selectedTargets,
-      license: config.license || '',
+      license: config.license ? config.license.trim() : '',
       clientId: await getClientId()
     };
 
@@ -82,4 +85,4 @@ async function getClientId() {
     await browser.storage.local.set({ clientId });
   }
   return clientId;
-                  }
+      }

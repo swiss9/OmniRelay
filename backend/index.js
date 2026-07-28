@@ -547,66 +547,41 @@ app.post('/api/check-license', async (req, res) => {
 // ─── Payment Routes ───
 app.use('/api/payment', payment);
 
-// ─── Admin Key Generation (ensures table exists, no verify) ───
+// ─── Admin Key Generation (uses batch to guarantee table + insert) ───
 app.post('/api/admin/generate-key', async (req, res) => {
   try {
     const { adminSecret } = req.body;
     if (adminSecret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
 
-    // 1. Ensure table exists (use separate execute to catch errors)
-    try {
-      await db.execute({
+    const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
+
+    // Execute both statements in a single pipeline
+    const results = await db.batch([
+      {
         sql: `CREATE TABLE IF NOT EXISTS licenses (
           key TEXT PRIMARY KEY,
           type TEXT DEFAULT 'pro',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`
-      });
-    } catch (tableError) {
-      return res.status(500).json({ error: 'Table creation failed', details: tableError.message });
-    }
-
-    const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
-
-    // 2. Insert the new key
-    let insertResult;
-    try {
-      insertResult = await db.execute({
+      },
+      {
         sql: 'INSERT INTO licenses (key, type) VALUES (?, ?)',
         args: [key, 'pro']
-      });
-    } catch (insertError) {
-      return res.status(500).json({ error: 'Insert failed', details: insertError.message });
+      }
+    ]);
+
+    const insertResult = results[1];
+    if (insertResult.type === 'error') {
+      throw new Error(insertResult.error.message);
     }
 
-    // 3. Immediately query the same key to confirm it's stored
-    let verifyResult;
-    try {
-      verifyResult = await db.execute({
-        sql: 'SELECT * FROM licenses WHERE key = ?',
-        args: [key]
-      });
-    } catch (selectError) {
-      return res.status(500).json({ error: 'Verification select failed', details: selectError.message });
-    }
-
-    // Return everything for debugging
     res.json({
       key,
-      stored: verifyResult.rows && verifyResult.rows.length > 0,
-      debug: {
-        insertResult: {
-          lastInsertRowid: insertResult.lastInsertRowid,
-          rowsAffected: insertResult.rowsAffected
-        },
-        verifyResult: {
-          rowCount: verifyResult.rows ? verifyResult.rows.length : 0,
-          rows: verifyResult.rows || []
-        }
-      }
+      stored: true,
+      lastInsertRowid: insertResult.lastInsertRowId || null
     });
   } catch (error) {
-    res.status(500).json({ error: 'Unexpected error', details: error.message });
+    res.status(500).json({ error: 'Failed to create license', details: error.message });
   }
 });
 

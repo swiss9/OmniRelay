@@ -201,6 +201,7 @@ app.get('/pay', (req, res) => {
 
 // ─── Temporary Test Page (remove after testing) ───
 app.get('/pro-test', (req, res) => {
+app.get('/pro-test', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html>
 <head>
@@ -234,6 +235,14 @@ app.get('/pro-test', (req, res) => {
   <textarea id="msg">Pro test</textarea>
   <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:document.getElementById('msg').value,url:'https://example.com',targets:['telegram:'+document.getElementById('tg').value,'discord:'+document.getElementById('dc').value],license:document.getElementById('license').value.trim(),clientId:'pt'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('r').textContent=JSON.stringify(d,null,2))">Send Relay</button>
   <pre id="r"></pre>
+
+  <hr>
+  <h2>🚫 Test Free Tier Limit (2 Telegram targets)</h2>
+  <p style="color:#ffa500">This will try to send to two Telegram chats at once – should be rejected if no license.</p>
+  <input id="tg1" placeholder="First Telegram Chat ID">
+  <input id="tg2" placeholder="Second Telegram Chat ID">
+  <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'Testing limits',url:'https://example.com',targets:['telegram:'+document.getElementById('tg1').value,'telegram:'+document.getElementById('tg2').value],license:'',clientId:'limit-test-'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('limitResult').textContent=JSON.stringify(d,null,2))">Test Limit</button>
+  <pre id="limitResult"></pre>
 </body>
 </html>`);
 });

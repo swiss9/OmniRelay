@@ -2,6 +2,8 @@ if (typeof browser === 'undefined') {
   var browser = chrome;
 }
 
+const DEFAULT_BACKEND_URL = 'https://omni-relay.vercel.app';
+
 document.addEventListener('DOMContentLoaded', async () => {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (tab) {
@@ -10,10 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const config = await browser.storage.local.get(['telegramChatId', 'discordWebhook', 'license', 'backendUrl']);
-  if (!config.backendUrl) {
-    document.getElementById('result').textContent = 'Set backend URL in Options.';
-    return;
-  }
+  const backendUrl = config.backendUrl || DEFAULT_BACKEND_URL;
 
   const targetsContainer = document.getElementById('targetsCheckboxes');
   const targets = [];
@@ -56,12 +55,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       text,
       url: tab.url,
       targets: selectedTargets,
-      license: config.license ? config.license.trim() : '',
+      license: (config.license || '').trim(),
       clientId: await getClientId()
     };
 
     try {
-      const res = await fetch(`${config.backendUrl}/api/relay`, {
+      const res = await fetch(`${backendUrl}/api/relay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -85,4 +84,4 @@ async function getClientId() {
     await browser.storage.local.set({ clientId });
   }
   return clientId;
-      }
+}

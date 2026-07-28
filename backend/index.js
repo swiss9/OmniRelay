@@ -216,7 +216,7 @@ app.get('/pro-test', (req, res) => {
 </html>`);
 });
 
-// ─── Limit Test Page (proves free-tier target limit) ───
+// ─── Limit Test Page (multiple targets in one call) ───
 app.get('/limit-test', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html>
@@ -226,16 +226,65 @@ app.get('/limit-test', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: system-ui; background: #000; color: #fff; padding: 1.5rem; }
-    button { padding: 0.8rem 1.5rem; background: #fff; color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
+    button { padding: 0.8rem 1.5rem; background: #fff; color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; width: 100%; }
     pre { background: #111; padding: 1rem; border-radius: 8px; margin-top: 1rem; white-space: pre-wrap; }
     p { color: #ffa500; }
   </style>
 </head>
 <body>
-  <h2>🚫 Free Tier Limit Test</h2>
-  <p>Clicking the button will try to send to two Telegram targets – this must fail with a "402" error because the free tier only allows 1 Telegram + 1 Discord.</p>
+  <h2>🚫 Free Tier Limit (Single Request)</h2>
+  <p>Attempts to send to two Telegram targets in one call – must fail.</p>
   <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'limit test',targets:['telegram:111','telegram:222'],license:'',clientId:'lim'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('r').textContent=JSON.stringify(d,null,2))">Test Limit (No License)</button>
   <pre id="r"></pre>
+</body>
+</html>`);
+});
+
+// ─── Persistent Limit Test (same clientId, sequential calls) ───
+app.get('/persistent-limit-test', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Persistent Limit Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui; background: #000; color: #fff; padding: 1.5rem; }
+    button { padding: 0.8rem; margin: 0.5rem 0; background: #fff; color: #000; font-weight: bold; border: none; border-radius: 8px; width: 100%; }
+    pre { background: #111; padding: 1rem; border-radius: 8px; white-space: pre-wrap; }
+    p { color: #ffa500; }
+  </style>
+</head>
+<body>
+  <h2>🔒 Persistent Free‑Tier Limit Test</h2>
+  <p>Uses a <b>fixed client ID</b> (like the real extension).<br>
+  Step 1: Click "Send to Telegram A" – will succeed.<br>
+  Step 2: Click "Send to Telegram B" – will fail (limit reached).</p>
+
+  <button onclick="send('telegram:111')">Send to Telegram A (111)</button>
+  <button onclick="send('telegram:222')">Send to Telegram B (222)</button>
+
+  <pre id="result"></pre>
+
+  <script>
+    const CLIENT_ID = 'persistent-test-client';   // same across both clicks
+
+    async function send(target) {
+      const payload = {
+        text: 'Limit test',
+        targets: [target],
+        license: '',
+        clientId: CLIENT_ID
+      };
+      const res = await fetch('/api/relay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
 </body>
 </html>`);
 });
@@ -327,16 +376,4 @@ app.post('/api/admin/generate-key', async (req, res) => {
     const { adminSecret } = req.body;
     if (adminSecret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
 
-    const key = 'OMNI-' + uuidv4().slice(0, 8).toUpperCase();
-    await redis.sadd('licenses', key);
-    res.json({ key, stored: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Database error', details: error.message });
-  }
-});
-
-// ─── Start Server ───
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`OmniRelay backend on port ${PORT}`));
-
-module.exports = app;
+    const key = 'OMNI-' + uuidv4(

@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const redis = require('./db');                     // <-- now Redis
+const redis = require('./db');
 const { validateLicense, trackFreeTarget, canAddTarget } = require('./license');
 const payment = require('./payment');
 const { v4: uuidv4 } = require('uuid');
@@ -24,28 +24,8 @@ app.get('/', (req, res) => {
   <link rel="icon" type="image/png" href="https://i.ibb.co/QjtH2qtx/1000176798.png">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #000000;
-      color: #ffffff;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-    }
-    .card {
-      background: #0a0a0a;
-      border-radius: 2.5rem;
-      border: 1px solid #222;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
-      padding: 3rem 2.5rem;
-      max-width: 520px;
-      width: 100%;
-      text-align: center;
-      position: relative;
-      transition: border-color 0.3s;
-    }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #000000; color: #ffffff; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .card { background: #0a0a0a; border-radius: 2.5rem; border: 1px solid #222; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); padding: 3rem 2.5rem; max-width: 520px; width: 100%; text-align: center; position: relative; transition: border-color 0.3s; }
     .card:hover { border-color: #333; }
     .logo { width: 90px; height: auto; margin-bottom: 1.5rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
     h1 { font-size: 3rem; font-weight: 800; letter-spacing: -0.02em; color: #ffffff; margin-bottom: 0.5rem; }
@@ -68,9 +48,7 @@ app.get('/', (req, res) => {
     <a class="btn" href="/pay">Upgrade to Pro – $49</a>
     <br>
     <a class="github-link" href="https://github.com/swiss9/OmniRelay" target="_blank" rel="noopener">
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-      </svg>
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       View on GitHub
     </a>
     <div class="footer-note">Already have a license? <a href="#">Configure your extension</a>.<br>Payments in USDT (ETH, BSC, Polygon, Tron).</div>
@@ -199,8 +177,7 @@ app.get('/pay', (req, res) => {
 </html>`);
 });
 
-// ─── Temporary Test Page (remove after testing) ───
-app.get('/pro-test', (req, res) => {
+// ─── Pro Test Page (generate key, validate, relay) ───
 app.get('/pro-test', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html>
@@ -235,14 +212,30 @@ app.get('/pro-test', (req, res) => {
   <textarea id="msg">Pro test</textarea>
   <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:document.getElementById('msg').value,url:'https://example.com',targets:['telegram:'+document.getElementById('tg').value,'discord:'+document.getElementById('dc').value],license:document.getElementById('license').value.trim(),clientId:'pt'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('r').textContent=JSON.stringify(d,null,2))">Send Relay</button>
   <pre id="r"></pre>
+</body>
+</html>`);
+});
 
-  <hr>
-  <h2>🚫 Test Free Tier Limit (2 Telegram targets)</h2>
-  <p style="color:#ffa500">This will try to send to two Telegram chats at once – should be rejected if no license.</p>
-  <input id="tg1" placeholder="First Telegram Chat ID">
-  <input id="tg2" placeholder="Second Telegram Chat ID">
-  <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'Testing limits',url:'https://example.com',targets:['telegram:'+document.getElementById('tg1').value,'telegram:'+document.getElementById('tg2').value],license:'',clientId:'limit-test-'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('limitResult').textContent=JSON.stringify(d,null,2))">Test Limit</button>
-  <pre id="limitResult"></pre>
+// ─── Limit Test Page (proves free-tier target limit) ───
+app.get('/limit-test', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Limit Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui; background: #000; color: #fff; padding: 1.5rem; }
+    button { padding: 0.8rem 1.5rem; background: #fff; color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
+    pre { background: #111; padding: 1rem; border-radius: 8px; margin-top: 1rem; white-space: pre-wrap; }
+    p { color: #ffa500; }
+  </style>
+</head>
+<body>
+  <h2>🚫 Free Tier Limit Test</h2>
+  <p>Clicking the button will try to send to two Telegram targets – this must fail with a "402" error because the free tier only allows 1 Telegram + 1 Discord.</p>
+  <button onclick="fetch('/api/relay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'limit test',targets:['telegram:111','telegram:222'],license:'',clientId:'lim'+Date.now()})}).then(r=>r.json()).then(d=>document.getElementById('r').textContent=JSON.stringify(d,null,2))">Test Limit (No License)</button>
+  <pre id="r"></pre>
 </body>
 </html>`);
 });
@@ -328,7 +321,7 @@ app.post('/api/check-license', async (req, res) => {
 // ─── Payment Routes ───
 app.use('/api/payment', payment);
 
-// ─── Admin Key Generation (Redis) ───
+// ─── Admin Key Generation ───
 app.post('/api/admin/generate-key', async (req, res) => {
   try {
     const { adminSecret } = req.body;

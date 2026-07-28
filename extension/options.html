@@ -57,14 +57,26 @@
       font-size: 0.85rem;
       color: #4ade80;
     }
+    .advanced-toggle {
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: #888;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+    }
+    .advanced-toggle:hover {
+      color: #fff;
+    }
+    #advancedSection {
+      display: none;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
   <img src="https://i.ibb.co/QjtH2qtx/1000176798.png" alt="OmniRelay logo" class="logo">
   <h1>Settings</h1>
-
-  <label>Backend URL</label>
-  <input type="text" id="backendUrl" placeholder="https://your-backend.vercel.app">
 
   <label>Telegram Chat ID</label>
   <input type="text" id="telegramChatId" placeholder="-1001234567890">
@@ -80,6 +92,12 @@
 
   <button id="checkLicenseBtn" style="background:#333; color:#fff;">Validate License</button>
   <div id="licenseStatus"></div>
+
+  <div class="advanced-toggle" id="advancedToggle">▼ Advanced (self‑hosted only)</div>
+  <div id="advancedSection">
+    <label>Custom Backend URL</label>
+    <input type="text" id="backendUrl" placeholder="https://your-backend.vercel.app">
+  </div>
 
   <script src="options.js"></script>
 </body>
